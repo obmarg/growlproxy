@@ -1,2 +1,4 @@
 *.pyc
 gntp/
+gntp
+*.db
