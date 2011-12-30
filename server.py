@@ -4,13 +4,26 @@ import gntp
 import socket
 import logging
 
+__all__ = [ 
+    'GrowlServer',
+    'GrowlClient',
+    'BaseGrowlHandler',
+    ]
+
+DefaultGrowlPort = 23053
 
 class GrowlServer(object):
     ''' Class to run a growl server '''
     
     connectionBacklog = 5
 
-    def __init__(self, handler, hostname="127.0.0.1", port=23053, password=None):
+    def __init__(
+            self,
+            handler,
+            hostname = "127.0.0.1",
+            port = int( DefaultGrowlPort ),
+            password = None
+            ):
         """ 
         Constructor for GrowlServer
         @param: handler     The handler to use for incoming messages
@@ -29,9 +42,15 @@ class GrowlServer(object):
         self.socket.listen( self.connectionBacklog )
         while self.run:
             acceptRes = self.socket.accept()
-            client = GrowlClient( *acceptRes, password=self.password )
-            self.ProcessConnection( client )
-            client.Disconnect()
+            client = GrowlClient(
+                remoteAddress = acceptRes[1],
+                socket = acceptRes[0],
+                password=self.password
+                )
+            try:
+                self.ProcessConnection( client )
+            finally:
+                client.Disconnect()
 
     def Stop(self):
         """ Stops the server from running """
@@ -50,12 +69,12 @@ class GrowlServer(object):
             self.handler.HandleRegister( message, client )
             # Send back an OK for now 
             resp = gntp.GNTPOK( action='Register' )
-            client.Send( 'GNTPOK', resp.encode() )
+            client.Send( resp )
         elif message.info[ 'messagetype' ] == 'NOTIFY':
             self.handler.HandleNotify( message, client )
             # Send back an OK for now
             resp = gntp.GNTPOK( action='Notify' )
-            client.Send( 'GNTPOK', resp.encode() )
+            client.Send( resp )
         else:
             print "Received %s" % message.info[ 'messagetype' ]
 
@@ -63,16 +82,29 @@ class GrowlServer(object):
 class GrowlClient(object):
     """ Class to wrap a socket to a growl client """
 
-    def __init__( self, socket, remoteAddress, password ):
+    def __init__(
+            self,
+            remoteAddress,
+            port = int( DefaultGrowlPort ),
+            socket=None,
+            password=None
+            ):
         """
         Constructor
-        @param: socket          The socket the client to speak to the client on
         @param: remoteAddress   The remote address of the client
+        @param: port            The port to listen on
+        @param: socket          The socket the client to speak to the client on
         @param: password        The password to use for the connection
+        @todo: Probably want to allow hash algo setting
+                Or at least stop using MD5 as the default
         """
-        self.socket = socket
         self.remoteAddress = remoteAddress
         self.password = password
+        if socket:
+            self.socket = socket
+        else:
+            self.socket = socket.Socket( socket.AF_INET, socket.SOCK_STREAM )
+            self.socket.connect( ( remoteAddress, port ) )
 
     def Disconnect(self):
         """ Disconnects the client """
@@ -80,14 +112,19 @@ class GrowlClient(object):
             self.socket.close()
             self.socket = None
 
-    def Send(self, type, data):
+    def Send(self, object):
         """
         Sends a growl packet
-        @param: type    The type of packet to send
-        @param: data    The data to send (usually the result of calling 
-                        encode() on a growl object)
+        @param: object    The growl object to send
         """
         #TODO: Add logging
+        if ( 
+                object.__getattr__( 'password', None ) is None or 
+                object.password != self.password
+                ):
+            # Reset the password on the object
+            object.set_password( self.password )
+        data = object.encode()
         self.socket.send( data.encode('utf-8', 'replace') )
 
     def Recv(self):
@@ -95,7 +132,10 @@ class GrowlClient(object):
         Receives a growl packet
         @returns        A gntp class representing the received data
         """
-        message = gntp.parse_gntp( self.socket.recv( 1024 ), self.password )
+        data = self.socket.recv( 1024 )
+        while not data.endswith( '\r\n\r\n' ):
+            data += self.socket.recv( 1024 )
+        message = gntp.parse_gntp( data, self.password )
         if message:
             remoteAddress = self.socket.getsockname()
             logging.debug( 
