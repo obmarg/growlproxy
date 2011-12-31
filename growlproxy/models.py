@@ -2,19 +2,11 @@
 This file contains the model definitions for growlproxy.
 '''
 
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship, backref
-import ui
+from sqlalchemy.orm import relationship, backref
 
-engine = create_engine( 
-        'sqlite:///' + ui.app.config['DATABASE'],
-        echo=True 
-        )
 Base = declarative_base()
-
-GetDbSession = sessionmaker( bind = engine )
 
 class Server(Base):
     '''

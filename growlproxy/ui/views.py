@@ -1,14 +1,13 @@
 from flask import request, session, g, redirect, url_for, render_template
-from growlproxy.ui import app
+from growlproxy.ui import app, LoadDb
 from growlproxy import models
-from growlproxy.models import GetDbSession
 
 @app.before_request
 def BeforeRequest():
     """
     Run before the code for a request.  Should create database connection etc.
     """
-    g.db = GetDbSession()
+    LoadDb()
 
 @app.teardown_request
 def TeardownRequest( exception ):
