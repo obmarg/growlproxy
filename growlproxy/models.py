@@ -6,8 +6,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, backref
+import ui
 
-engine = create_engine( 'sqlite:///database.db', echo=True )
+engine = create_engine( 
+        'sqlite:///' + ui.app.config['DATABASE'],
+        echo=True 
+        )
 Base = declarative_base()
 
 GetDbSession = sessionmaker( bind = engine )

@@ -2,3 +2,4 @@
 gntp/
 gntp
 *.db
+settings.py
