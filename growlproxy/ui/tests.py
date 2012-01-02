@@ -1,8 +1,11 @@
 
 import os
-import growlproxy.ui
 import unittest
 import tempfile
+import json
+import growlproxy.ui
+import growlproxy.db
+from growlproxy import models
 
 class UiTestCase(unittest.TestCase):
 
@@ -10,6 +13,7 @@ class UiTestCase(unittest.TestCase):
         self.dbFd, dbPath = tempfile.mkstemp()
         growlproxy.ui.app.config[ 'DATABASE' ] = dbPath
         growlproxy.ui.app.config[ 'TESTING' ] = True
+        growlproxy.db.InitDb( create=True )
         self.app = growlproxy.ui.app.test_client()
         
     def tearDown(self):

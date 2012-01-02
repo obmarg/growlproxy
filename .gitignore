@@ -3,3 +3,4 @@ gntp/
 gntp
 *.db
 settings.py
+tags
