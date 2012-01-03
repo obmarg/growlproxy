@@ -8,6 +8,21 @@ from sqlalchemy.orm import relationship, backref
 
 Base = declarative_base()
 
+class ConfigOption(Base):
+    '''
+    Class representing a configuration option
+    '''
+
+    __tablename__ = "Configuration"
+
+    def __init__( self, key, value ):
+        self.key = key
+        self.value = value
+
+    key = Column( String, primary_key=True )
+    value = Column( String, nullable=False )
+
+
 class Server(Base):
     '''
     Class representing a remote growl server to send/receive notifications
