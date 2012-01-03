@@ -42,13 +42,27 @@ class ConfigTests( unittest.TestCase ):
 
     def test_Defaults( self ):
         ConfigManager.defaults[ 'SaneDefault' ] = 'NoWay'
+        ConfigManager.defaults[ 'InsaneDefault' ] = True
         
         cm = ConfigManager()
         self.assertEqual( cm.SaneDefault, 'NoWay' )
         self.assertEqual( cm[ 'SaneDefault' ], 'NoWay' )
+        self.assertEqual( cm.InsaneDefault, True )
+        assert( cm.InsaneDefault is True )
 
         # Reset the defaults
         ConfigManager.defaults = {}
+
+    def test_DataTypes( self ):
+        cm = ConfigManager()
+        cm.ABool = True
+        cm.AnotherBool = False
+        cm.AnInt = 100
+
+        assert( cm.ABool is True )
+        assert( cm.AnotherBool is False )
+        assert( isinstance( cm.AnInt, int ) )
+        self.assertEqual( cm.AnInt, 100 )
 
 
 

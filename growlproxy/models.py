@@ -3,7 +3,7 @@ This file contains the model definitions for growlproxy.
 '''
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship, backref
 
 Base = declarative_base()
@@ -17,10 +17,26 @@ class ConfigOption(Base):
 
     def __init__( self, key, value ):
         self.key = key
-        self.value = value
+        if value is True or value is False:
+            self.type = 'Boolean'
+        elif isinstance( value, int ):
+            self.type = 'Int'
+        else:
+            self.type = 'String'
+        self.value = str( value )
 
     key = Column( String, primary_key=True )
     value = Column( String, nullable=False )
+    type = Column( Enum( 'String', 'Int', 'Boolean' ), nullable=False )
+
+    def GetValue( self ):
+        ''' Gets the value for this option, represented by the correct type '''
+        if self.type == 'String':
+            return self.value
+        elif self.type == 'Int':
+            return int(self.value)
+        elif self.type == 'Boolean':
+            return self.value == 'True'
 
 
 class Server(Base):

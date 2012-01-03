@@ -5,6 +5,7 @@ from .models import ConfigOption
 class ConfigManager(object):
 
     defaults = {
+            'ForwardAll' : True
             }
 
     def __init__( self ):
@@ -14,7 +15,9 @@ class ConfigManager(object):
         self.db = growlproxy.db.GetDbSession()
 
     def __setitem__( self, key, value ):
-        self.db.merge( ConfigOption( key, value ) )
+        self.db.merge( 
+                ConfigOption( key, value ) 
+                )
         self.db.commit()
 
     def __getitem__( self, key ):
@@ -27,7 +30,7 @@ class ConfigManager(object):
             raise KeyError( 
                 "Key %s not in database" % key
                 )
-        return option.value
+        return option.GetValue()
 
     def __getattr__( self, name ):
         try:
