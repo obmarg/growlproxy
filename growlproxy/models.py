@@ -55,14 +55,23 @@ class ServerGroup(Base):
 
     __tablename__ = "ServerGroups"
 
+    def __init__( self, name=None ):
+        self.name = name
+
     id = Column( Integer, primary_key=True )
     name = Column( String )
-    members = relationship( 'ServerGroupMembership', backref='group', order_by="ServerGroupMembership.priority" )
-
+    
     # singleServerGroup should be True if this group
     # represents a single server (one of these should
     # eventually be created for each individual server)
     singleServerGroup = Column( Boolean, default=False )
+    
+    members = relationship(
+            'ServerGroupMembership',
+            backref='group',
+            order_by="ServerGroupMembership.priority",
+            passive_deletes=True
+            )
 
 
 class ServerGroupMembership(Base):
@@ -74,12 +83,16 @@ class ServerGroupMembership(Base):
 
     groupId = Column( 
             Integer,
-            ForeignKey( 'ServerGroups.id' ),
+            ForeignKey( 
+                'ServerGroups.id', 
+                onupdate='CASCADE', 
+                ondelete='CASCADE' 
+                ),
             primary_key = True
             )
     serverId = Column( 
             Integer,
-            ForeignKey( 'Servers.id' ),
+            ForeignKey( 'Servers.id', onupdate='CASCADE', ondelete='CASCADE' ),
             primary_key = True
             )
     priority = Column( Integer, default=0 )
@@ -90,7 +103,7 @@ class ServerGroupMembership(Base):
     #       Probably less neccesary for the reverse`
     server = relationship(
             'Server',
-            backref = 'groupMemberships'
+            backref=backref( 'groupMemberships', passive_deletes=True )
             )
 
 
@@ -103,14 +116,30 @@ class ForwardRule(Base):
 
     id = Column( Integer, primary_key=True )
     name = Column( String )
-    fromServerGroupId = Column( Integer, ForeignKey( 'ServerGroups.id' ) )
-    toServerGroupId = Column( Integer, ForeignKey( 'ServerGroups.id' ) )
-    sendToAll = Column( Boolean )           
-    # Consider forwarding done if one server is online
-    # Otherwise, only send to highest priority server
+    fromServerGroupId = Column( 
+            Integer,
+            ForeignKey( 
+                'ServerGroups.id', 
+                onupdate='CASCADE', 
+                ondelete='SET NULL' 
+                ) )
+    toServerGroupId = Column(
+            Integer,
+            ForeignKey(
+                'ServerGroups.id',
+                onupdate='CASCADE',
+                ondelete='SET NULL'
+                )
+            )
+    
+    # If True send to highest priority server
     # (Or random choice if all same priority)
+    # Otherwise, send to all servers 
+    # (and don't finish till done)
+    sendToAll = Column( Boolean )
+    
+    # Store the growl for later if servers are offline
     storeIfOffline = True       
-    # Store the growl for later if all servers offline
 
     # TODO: Find out how to make the below link straight to a list of servers?
     #       Also, maybe add a backref
@@ -145,12 +174,22 @@ class RuleFilter(Base):
     __tablename__ = "RuleFilters"
 
     id = Column( Integer, primary_key=True )
-    ruleId = 0 # TODO: Foreign key me
+    ruleId = Column( 
+            Integer, 
+            ForeignKey( 
+                'ForwardRules.id',
+                onupdate='CASCADE',
+                ondelete='CASCADE' 
+                ) )
     applicationName = Column( String )
     growlTitle = Column( String )
-    growContentsRegex = Column( String )  # Regular expression of growl contents
+    growContentsRegex = Column( String ) # Regular expression of growl contents
 
     #TODO: Define a constructor for the above, with default "" for all 
     #      filter criteria
+    rule = relationship( 
+            ForwardRule, 
+            backref=backref( 'filters', passive_deletes=True )
+            )
 
 
