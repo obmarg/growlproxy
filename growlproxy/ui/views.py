@@ -74,3 +74,45 @@ def DeleteServer():
             ).delete( False )
     flash( 'Deleted succesfully' )
     return "OK"
+
+@app.route('/groups/')
+def GroupList():
+    groupQuery = g.db.query( models.ServerGroup ).join( 'members', 'server' )
+    options = {
+            'groups' : groupQuery.all(),
+            'confirmDeleteDialog' : { 
+                'itemType' : 'Group',
+                'url' : url_for( 'DeleteGroup' )
+                }
+            }
+    return render_template( 'groupList.html', **options )
+
+@app.route('/groups/add/', methods=['GET','POST'])
+def AddGroup():
+    form = forms.GroupDetails()
+    if form.validate_on_submit():
+        group = models.ServerGroup(
+                name = form.name.data
+                )
+        for member in form.members.data:
+            group.members.append( 
+                    models.ServerGroupMembership(
+                        server = member
+                        )
+                    )
+        g.db.add( group )
+        flash('Success')
+        return redirect( url_for( 'GroupList' ) )
+    return render_template( 'addGroup.html', form=form )
+
+@app.route('/api/DeleteGroup/', methods=['POST'])
+def DeleteGroup():
+    if 'id' not in request.form:
+        abort(500)
+    try:
+        id = int( request.form[ 'id' ], 10 )
+    except:
+        abort( 500 )
+    g.db.query( models.ServerGroup ).filter_by( id=id ).delete( False )
+    flash( 'Deleted Succesfully' )
+    return "OK"

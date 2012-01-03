@@ -42,6 +42,9 @@ class Server(Base):
         self.forwardGrowls = forwardGrowls
         self.userRegistered = userRegistered
 
+    def __str__( self ):
+        return self.name
+
 
 class ServerGroup(Base):
     '''
@@ -54,7 +57,12 @@ class ServerGroup(Base):
 
     id = Column( Integer, primary_key=True )
     name = Column( String )
-    members = relationship( 'ServerGroupMembership', backref='group' )
+    members = relationship( 'ServerGroupMembership', backref='group', order_by="ServerGroupMembership.priority" )
+
+    # singleServerGroup should be True if this group
+    # represents a single server (one of these should
+    # eventually be created for each individual server)
+    singleServerGroup = Column( Boolean, default=False )
 
 
 class ServerGroupMembership(Base):
@@ -74,7 +82,7 @@ class ServerGroupMembership(Base):
             ForeignKey( 'Servers.id' ),
             primary_key = True
             )
-    priorirty = Column( Integer )
+    priority = Column( Integer, default=0 )
     # Ascending list.  If all 0, all equal priority
 
     #TODO: Possibly add an AssociationProxy somewhere to simplify things.

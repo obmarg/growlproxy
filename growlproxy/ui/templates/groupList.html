@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block additionalHeader %}
+<style type='text/css'>
+    #groupList {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        width: 50%;
+    }
+</style>
+<script type='text/javascript'>
+    $(document).ready(function(){
+            var deleteId = "";
+            $("#groupList li").click( function(){
+                $("#groupList .ui-selected").removeClass( "ui-selected" );
+                $(this).addClass( "ui-selected" );
+                deleteId = $(this).attr( "name" );
+            });
+
+            $("button").button();
+            $(".addButton").button();
+
+            $(".deleteButton").click( function(){
+                if ( deleteId != "" ) {
+                    deleteDialog( deleteId );
+                }
+            });
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+<div id='topButtons'>
+    <a 
+        class='addButton'
+        href='{{ url_for( "AddGroup" ) }}'
+        >
+        Add Group
+    </a>
+    <button class='deleteButton' >Delete Selected</button>
+</div>
+<ul id="groupList" >
+    {% for group in groups %}
+    <li 
+        class='ui-widget-content' 
+        name='{{ group.id }}' >
+        {{ group.name }}
+        <ul>
+            {% for member in group.members %} 
+            <li>{{ member.server.name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endfor %}
+</ul>
+<div id="bottomButtons">
+    <a 
+        class='addButton'
+        href='{{ url_for( "AddGroup" ) }}'
+        >
+        Add Group
+    </a>
+    <button class='deleteButton' >Delete Selected</button>
+</div>
+{% endblock %}
