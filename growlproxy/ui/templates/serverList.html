@@ -5,6 +5,7 @@
     $(document).ready(function(){
             $(".selectable").selectable();
             $("button").button();
+            $(".addButton").button();
 
             $(".deleteButton").click( function(){
                 var list = new Array();
@@ -21,7 +22,12 @@
 
 {% block body %}
 <div id='topButtons'>
-    <button class='addButton' >Add Server</button>
+    <a 
+        class='addButton'
+        href='{{ url_for( "AddServer" ) }}'
+        >
+        Add Server
+    </a>
     <button class='deleteButton' >Delete Selected</button>
 </div>
 <ul id="serverList" class='selectable'>
@@ -34,7 +40,12 @@
     {% endfor %}
 </ul>
 <div id="bottomButtons">
-    <button class='addButton' >Add Server</button>
+    <a 
+        class='addButton'
+        href='{{ url_for( "AddServer" ) }}'
+        >
+        Add Server
+    </a>
     <button class='deleteButton' >Delete Selected</button>
 </div>
 {% endblock %}

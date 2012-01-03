@@ -1,0 +1,13 @@
+{% macro render_field(field) %}
+  {% if field.type != 'submit' %} 
+  {% endif %}
+  <dt>{{ field.label }}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    {# TODO: jquery ui/style this up a bit #}
+    <ul class="errors">
+    {% for error in field.errors %}<li>{{ error }}{% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}

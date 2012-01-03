@@ -1,7 +1,8 @@
 
 import json
-from flask import request, session, g, redirect, url_for, render_template, abort
-from growlproxy.ui import app, LoadDb
+from flask import request, session, g, redirect, url_for, render_template
+from flask import abort, flash
+from growlproxy.ui import app, LoadDb, forms
 from growlproxy import models
 
 
@@ -44,6 +45,22 @@ def ServerList():
             **options
             )
 
+@app.route('/servers/add/', methods=['GET','POST'])
+def AddServer():
+    form = forms.ServerDetails()
+    if form.validate_on_submit():
+        s = models.Server(
+                form.name.data,
+                form.remoteHost.data,
+                form.receiveGrowls.data,
+                form.forwardGrowls.data,
+                True
+                )
+        g.db.add( s )
+        flash('Success')
+        return redirect( url_for( 'ServerList' ) )
+    return render_template( 'addServer.html', form=form )
+
 @app.route('/api/DeleteServer/', methods=['POST'])
 def DeleteServer():
     if 'id' not in request.form:
@@ -55,4 +72,5 @@ def DeleteServer():
     g.db.query( models.Server ).filter(
             models.Server.id.in_( ids ) 
             ).delete( False )
+    flash( 'Deleted succesfully' )
     return "OK"
