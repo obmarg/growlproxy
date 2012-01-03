@@ -11,6 +11,7 @@ __all__ = [
     ]
 
 DefaultGrowlPort = 23053
+DefaultSocketTimeout = 5
 
 class GrowlServer(object):
     ''' Class to run a growl server '''
@@ -35,6 +36,8 @@ class GrowlServer(object):
         self.handler = handler
         self.socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
         self.socket.bind( ( hostname, port ) )
+        self.hostname = hostname
+        self.port = port
         self.password = password
 
     def Run(self):
@@ -44,7 +47,7 @@ class GrowlServer(object):
             acceptRes = self.socket.accept()
             client = GrowlClient(
                 remoteAddress = acceptRes[1],
-                socket = acceptRes[0],
+                sock = acceptRes[0],
                 password=self.password
                 )
             try:
@@ -86,24 +89,25 @@ class GrowlClient(object):
             self,
             remoteAddress,
             port = int( DefaultGrowlPort ),
-            socket=None,
+            sock=None,
             password=None
             ):
         """
         Constructor
         @param: remoteAddress   The remote address of the client
         @param: port            The port to listen on
-        @param: socket          The socket the client to speak to the client on
+        @param: sock            The socket the client to speak to the client on
         @param: password        The password to use for the connection
         @todo: Probably want to allow hash algo setting
                 Or at least stop using MD5 as the default
         """
         self.remoteAddress = remoteAddress
         self.password = password
-        if socket:
-            self.socket = socket
+        if sock:
+            self.socket = sock
         else:
-            self.socket = socket.Socket( socket.AF_INET, socket.SOCK_STREAM )
+            self.socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+            self.socket.settimeout( DefaultSocketTimeout )
             self.socket.connect( ( remoteAddress, port ) )
 
     def Disconnect(self):
@@ -119,7 +123,7 @@ class GrowlClient(object):
         """
         #TODO: Add logging
         if ( 
-                object.__getattr__( 'password', None ) is None or 
+                ( not hasattr( object, 'password' ) ) or 
                 object.password != self.password
                 ):
             # Reset the password on the object
