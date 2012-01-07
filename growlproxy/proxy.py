@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from growlproxy.server import GrowlServer, BaseGrowlHandler, GrowlClient
 from growlproxy import models
+from growlproxy.config import ConfigManager
 import growlproxy.db 
 
 class GrowlProxy(BaseGrowlHandler):
@@ -12,9 +13,9 @@ class GrowlProxy(BaseGrowlHandler):
     def __init__( self, hostname=None, port=None ):
         ''' Constructor '''
         self.db = growlproxy.db.GetDbSession()
-        #TODO: load password from db
+        self.config = ConfigManager()
         params = {
-                'password' : 'password'
+                'password' : self.config.password
                 }
         if hostname:
             params[ 'hostname' ] = hostname
@@ -46,12 +47,13 @@ class GrowlProxy(BaseGrowlHandler):
         @param: message     The notify message received from the client
         @param: client      The client that sent the notify message
         """
-        # TODO: Currently multiple levels of forwarding will overwrite this.
-        # Probably want to update GNTP to stop that from happening
-        message.headers[ 'Received' ] = self.MakeReceivedString( client )
-        self.growls.append( message )
-        self.CheckForwards()
+        if self.config.forwardAll:
+            self.Forward( message, client )
+        else:
+            # TODO: Add filter rule checking etc. here
+            pass
 
+       
     def HandleSubscribe( self, message, client ):
         """
         Handler for subscribe messages
@@ -68,6 +70,14 @@ class GrowlProxy(BaseGrowlHandler):
                 self.server.hostname,
                 datetime.now().isoformat(" ")
                 )
+
+    def Forward( self, message, client ):
+        # TODO: Currently multiple levels of forwarding will overwrite this.
+        # Probably want to update GNTP to stop that from happening
+        message.headers[ 'Received' ] = self.MakeReceivedString( client )
+        self.growls.append( message )
+        self.CheckForwards()
+
 
     def CheckForwards( self ):
         forwardServers = (
