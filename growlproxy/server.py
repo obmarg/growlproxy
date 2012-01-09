@@ -3,15 +3,81 @@
 import gntp
 import socket
 import logging
+import traceback
+from twisted.internet.protocol import Protocol, Factory
+from twisted.internet.endpoints import TCP4ServerEndpoint
+from twisted.internet import reactor
+from collections import namedtuple
 
 __all__ = [ 
     'GrowlServer',
     'GrowlClient',
     'BaseGrowlHandler',
+    'IpEndpoint'
     ]
 
 DefaultGrowlPort = 23053
 DefaultSocketTimeout = 5
+GntpMessageEnd = '\r\n\r\n'
+
+IpEndpoint = namedtuple( "IpEndpoint", [ 'host', 'port' ] )
+
+class Gntp(Protocol):
+    def __init__( self, server ):
+        ''' 
+        Constructor
+        @param: server      The server to pass growl messages to.
+        '''
+        self.server = server
+        self.buffer = ""
+
+    def dataReceived( self, data ):
+        ''' Data received handler '''
+        if len( self.buffer ) > 0:
+            self.buffer = data
+        else:
+            self.buffer += data
+        self.CheckBuffer()
+
+    def CheckBuffer( self ):
+        ''' Checks the contents of the buffer for whole messages '''
+        if self.buffer.endswith( GntpMessageEnd ):
+            self.ProcessPacket( self.buffer )
+            self.buffer = ""
+            #TODO: End the connection now?
+        
+    def ProcessPacket( self, packet ):
+        ''' 
+        Processes a packet
+        @param: packet     The packet to process
+        '''
+        try:
+            message = gntp.parse_gntp( packet, self.server.password )
+        except:
+            logging.exception('Failed to parse packet:\n%s' % packet )
+            return
+        if message:
+            remoteAddress = self.transport.getPeer()
+            logging.debug( 
+                    'From %s:%s <%s>\n%s',
+                    remoteAddress.host,
+                    remoteAddress.port,
+                    message.__class__,
+                    message 
+                    )
+            resp = self.server.GetResponse( 
+                    message, 
+                    IpEndpoint( remoteAddress.host, remoteAddress.port ) 
+                    )
+            data = resp.encode()
+            self.transport.write( data.encode('utf-8', 'replace') )
+
+class GntpFactory(Factory):
+    def __init__( self, server ):
+        self.server = server
+
+    def buildProtocol( self, addr ):
+        return Gntp( self.server )
 
 class GrowlServer(object):
     ''' Class to run a growl server '''
@@ -34,57 +100,48 @@ class GrowlServer(object):
         """
         self.run = True
         self.handler = handler
-        self.socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        self.socket.bind( ( hostname, port ) )
         self.hostname = hostname
         self.port = port
         self.password = password
+        self.endpoint = TCP4ServerEndpoint( reactor, self.port )
 
     def Run(self):
         """ Runs the server, listening for connections """
-        self.socket.listen( self.connectionBacklog )
-        while self.run:
-            acceptRes = self.socket.accept()
-            client = GrowlClient(
-                remoteAddress = acceptRes[1],
-                sock = acceptRes[0],
-                password=self.password
-                )
-            try:
-                self.ProcessConnection( client )
-            finally:
-                client.Disconnect()
+        #TODO: Listen for twisted stuff
+        self.endpoint.listen( GntpFactory( self ) )
+        reactor.run()
+        pass
 
     def Stop(self):
         """ Stops the server from running """
-        self.run = False
-        if self.socket:
-            self.socket.close()
-            self.socket = None
+        reactor.stop()
+        #TODO: figure out if anything more is needed here
 
-    def ProcessConnection(self, client):
+    def GetResponse( self, message, endpoint ):
         """
-        Processes an incoming connection
-        @param: client      A GrowlClient representing the client
+        Processes an incoming messsage and gets a response
+        @param: message     The incoming message
+        @param: endpoint    The endpoint it originated from
         """
-        message = client.Recv()
         if message.info[ 'messagetype' ] == 'REGISTER':
-            self.handler.HandleRegister( message, client )
+            self.handler.HandleRegister( message, endpoint )
             # Send back an OK for now 
             resp = gntp.GNTPOK( action='Register' )
-            client.Send( resp )
+            return resp
         elif message.info[ 'messagetype' ] == 'NOTIFY':
-            self.handler.HandleNotify( message, client )
+            self.handler.HandleNotify( message, endpoint )
             # Send back an OK for now
             resp = gntp.GNTPOK( action='Notify' )
-            client.Send( resp )
+            return resp
         else:
             print "Received %s" % message.info[ 'messagetype' ]
+            return None
 
 
 class GrowlClient(object):
     """ Class to wrap a socket to a growl client """
 
+    #TODO: Probably want to replace all this with a twisted python client
     def __init__(
             self,
             remoteAddress,
@@ -95,7 +152,7 @@ class GrowlClient(object):
         """
         Constructor
         @param: remoteAddress   The remote address of the client
-        @param: port            The port to listen on
+        @param: port            The port of the client
         @param: sock            The socket the client to speak to the client on
         @param: password        The password to use for the connection
         @todo: Probably want to allow hash algo setting
@@ -113,6 +170,7 @@ class GrowlClient(object):
     def Disconnect(self):
         """ Disconnects the client """
         if self.socket:
+            self.socket.shutdown( socket.SHUT_RDWR )
             self.socket.close()
             self.socket = None
 

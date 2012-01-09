@@ -66,7 +66,7 @@ class GrowlProxy(BaseGrowlHandler):
     def MakeReceivedString( self, client ):
         ''' Makes a string for the Received header used when forwarding '''
         return "From %s by %s ; %s " % (
-                client.remoteAddress,
+                client.host,
                 self.server.hostname,
                 datetime.now().isoformat(" ")
                 )
