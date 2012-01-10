@@ -116,3 +116,57 @@ def DeleteGroup():
     g.db.query( models.ServerGroup ).filter_by( id=id ).delete( False )
     flash( 'Deleted Succesfully' )
     return "OK"
+
+@app.route('/rules/')
+def RuleList():
+    ruleQuery = g.db.query( models.ForwardRule )
+    options = {
+            'rules' : ruleQuery.all(),
+            'confirmDeleteDialog' : { 
+                'itemType' : 'Rule',
+                'url' : url_for( 'DeleteRule' )
+                }
+            }
+    return render_template( 'ruleList.html', **options )
+
+@app.route('/api/DeleteRule/', methods=['POST'])
+def DeleteRule():
+    if 'id' not in request.form:
+        abort( 500 )
+    try:
+        id = int( request.form[ 'id' ], 10 )
+    except:
+        abort( 500 )
+    g.db.query( models.ForwardRule ).filter_by( id=id ).delete( False )
+    flash( "Deleted Succesfully" )
+    return "OK"
+
+@app.route('/rules/add/', methods=['GET','POST'])
+def AddRule():
+    form = forms.RuleDetails()
+    if form.validate_on_submit():
+        rule = models.ForwardRule(
+                name = form.name.data,
+                fromServerGroupId = form.fromGroup.data.id,
+                toServerGroupId = form.toGroup.data.id,
+                sendToAll = form.sendToAll.data,
+                storeIfOffline = form.storeIfOffline.data
+                )
+        filterDict = {}
+        if form.applicationName.data:
+            filterDict[ 'applicationName' ] = form.applicationName.data
+        if form.growlTitle.data:
+            filterDict[ 'growlTitle' ] = form.growlTitle.data
+        filter = None
+        if len( filterDict ) > 0:
+
+            filter = models.RuleFilter(
+                    rule = rule,
+                    **filterDict
+                    )
+        g.db.add( rule )
+        if filter:
+            g.db.add( filter )
+        flash('Success')
+        return redirect( url_for( 'RuleList' ) )
+    return render_template( 'addRule.html', form=form )

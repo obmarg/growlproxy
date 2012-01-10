@@ -52,7 +52,7 @@ class Server(Base):
     remoteHost = Column( String )
     receiveGrowls = Column( Boolean )
     forwardGrowls = Column( Boolean )
-    userRegistered = Column( Boolean )   
+    userRegistered = Column( Boolean )
     # True if the user registered this server.
     # False if it was registered/subscribed through gntp
 
@@ -85,6 +85,9 @@ class ServerGroup(Base):
     '''
 
     __tablename__ = "ServerGroups"
+
+    def __str__( self ):
+        return self.name
 
     def __init__( self, name=None ):
         self.name = name
@@ -167,10 +170,10 @@ class ForwardRule(Base):
     # (Or random choice if all same priority)
     # Otherwise, send to all servers 
     # (and don't finish till done)
-    sendToAll = Column( Boolean )
+    sendToAll = Column( Boolean, nullable=False )
     
     # Store the growl for later if servers are offline
-    storeIfOffline = True       
+    storeIfOffline = Column( Boolean, nullable=False )       
 
     # TODO: Find out how to make the below link straight to a list of servers?
     #       Also, maybe add a backref

@@ -280,8 +280,8 @@ class DeleteGroupTests(ServerGroupTestCase):
     def DeleteGroup( self, fail=True, **kwargs ):
         ''' 
         Utility function.  Deletes a server group
-        @param: id      The id of the server to delete
-        @param: kwargs  The arguments to delete
+        @param: fail        True if failure is expected
+        @param: kwargs      The arguments to delete
         '''
         prevCount = self.db.query( models.ServerGroup ).count()
         rv = self.app.post(
@@ -437,4 +437,276 @@ class AddServerGroupTests(ServerTestCase):
                 name = "Another group",
                 members = self.db.query( models.Server ).all()
                 )
-        
+      
+class ForwardRuleTestCase(ServerGroupTestCase):
+    ''' Base class for tests requiring forward rul data in db '''
+
+    def setUp( self ):
+        super( ForwardRuleTestCase, self ).setUp()
+        serverGroups = self.db.query( models.ServerGroup )
+        rule = models.ForwardRule(
+                name = "Test Rule 1",
+                toServerGroupId = serverGroups[ 0 ].id,
+                fromServerGroupId = serverGroups[ 1 ].id,
+                sendToAll = False,
+                storeIfOffline = True
+                )
+        self.db.add( rule )
+        rule = models.ForwardRule(
+                name = "Test Rule 2",
+                toServerGroupId = serverGroups[ 1 ].id,
+                fromServerGroupId = serverGroups[ 2 ].id,
+                sendToAll = True,
+                storeIfOffline = False
+                )
+        rule.filters.append(
+                models.RuleFilter(
+                    applicationName = "Something something"
+                    ) )
+        self.db.add( rule )
+        rule = models.ForwardRule(
+                name = "Test Rule 3",
+                toServerGroupId = serverGroups[ 0 ].id,
+                fromServerGroupId = serverGroups[ 2 ].id,
+                sendToAll = False,
+                storeIfOffline = False
+                )
+        rule.filters.append(
+                models.RuleFilter(
+                    growlTitle = "To be sure"
+                    ) )
+        self.db.add( rule )
+        self.db.commit()
+
+class RuleListTest(ForwardRuleTestCase):
+    def test_BasicList(self):
+        rv = self.app.get( '/rules/' )
+        self.assertIn( "200", rv.status )
+        self.assertIn( "Test Rule 1", rv.data )
+        self.assertIn( "Test Rule 2", rv.data )
+        self.assertIn( "Test Rule 3", rv.data )
+
+class DeleteRuleTest(ForwardRuleTestCase):
+    def DeleteRule(self, fail=True, **kwargs):
+        ''' 
+        Utility function.  Deletes a rule
+        @param: fail        True if failure is expected
+        @param: kwargs      Parameters for delete
+        '''
+        prevCount = self.db.query( models.ForwardRule ).count()
+        rv = self.app.post(
+                '/api/DeleteRule/',
+                data = kwargs
+                )
+        if fail:
+            self.assertIn( "500", rv.status )
+            self.assertEqual(
+                    self.db.query( models.ForwardRule ).count(),
+                    prevCount
+                    )
+        else:
+            self.assertIn( "200", rv.status )
+            self.assertEqual(
+                    self.db.query( models.ForwardRule ).count(),
+                    prevCount - 1
+                    )
+
+    def test_DeleteNoRule( self ):
+        self.DeleteRule()
+
+    def test_DeleteGarbageRule( self ):
+        self.DeleteRule( id = 'rule' )
+
+    def test_DeleteRules( self ):
+        ids = [ rule.id for rule in self.db.query( models.ForwardRule ) ]
+        for id in ids:
+            self.DeleteRule(
+                    fail = False,
+                    id = id
+                    )
+
+class AddRuleTests(ServerGroupTestCase):
+
+    def VerifyForm( self, data ):
+        '''
+        Verifies the add rule form is in data
+        @param: data    The data to verify
+        '''
+        self.assertIn( 'id', data )
+        self.assertIn( 'name', data )
+        self.assertIn( 'fromGroup', data )
+        self.assertIn( 'toGroup', data )
+        self.assertIn( 'sendToAll', data )
+        self.assertIn( 'storeIfOffline', data )
+        self.assertIn( 'applicationName', data )
+        self.assertIn( 'growlTitle', data )
+        self.assertIn( 'Group No1', data )
+        self.assertIn( 'Group No2', data )
+        self.assertIn( 'Group No3', data )
+
+    def VerifyRule( 
+            self,
+            name,
+            toGroup,
+            fromGroup,
+            sendToAll=False,
+            storeIfOffline=False,
+            applicationName=None,
+            growlTitle=None
+            ):
+        '''
+        Verifies that a rule with the passed in parameters
+        exists (and that there is only one with name)
+        '''
+        query = self.db.query( models.ForwardRule ).filter_by( name = name )
+        self.assertEqual( query.count(), 1 )
+        self.assertEqual( query[0].name, name )
+        query.join( "filters" )
+        self.assertEqual( query[ 0 ].toServerGroupId, toGroup.id )
+        self.assertEqual( query[ 0 ].fromServerGroupId, fromGroup.id )
+        self.assertEqual( query[ 0 ].sendToAll, sendToAll )
+        self.assertEqual( query[ 0 ].storeIfOffline, storeIfOffline )
+        if applicationName or growlTitle:
+            self.assertEqual( len( query[ 0 ].filters ), 1 )
+            self.assertEqual( 
+                    query[ 0 ].filters[ 0 ].applicationName,
+                    applicationName
+                    )
+            self.assertEqual(
+                    query[ 0 ].filters[ 0 ].growlTitle,
+                    growlTitle
+                    )
+        else:
+            self.assertEqual( len( query[ 0 ].filters ), 0 )
+
+    def VerifyList( self, data ):
+        '''
+        Verifies the returned list
+        @param data     The data to verify
+        '''
+        for rule in self.db.query( models.ForwardRule ):
+            self.assertIn( rule.name, data )
+
+    def AddRule( 
+            self,
+            expectFail=False,
+            verifyDb=False,
+            **kwargs
+            ):
+        '''
+        Adds a rule
+        @param: expectFail  Whether or not to expect failure
+        @param: verifyDb    Whether or not to verify the 
+                            rule was added to db
+        @param: kwargs      Keyword arguments to pass
+                            to the request
+        '''
+        data = dict(kwargs)
+        if 'toGroup' in data:
+            data['toGroup'] = data['toGroup'].id
+        if 'fromGroup' in data:
+            data['fromGroup'] = data['fromGroup'].id
+        rv = self.app.post(
+                '/rules/add/',
+                data = data,
+                follow_redirects = True
+                )
+        self.assertIn( "200", rv.status )
+        if expectFail:
+            self.VerifyForm( rv.data )
+        elif verifyDb:
+            self.VerifyRule( **kwargs )
+            self.VerifyList( rv.data )
+        return rv
+
+    def test_NoData( self ):
+        self.AddRule( expectFail = True )
+
+    def test_NoName( self ):
+        groups = self.db.query( models.ServerGroup )
+        self.AddRule(
+                expectFail = True,
+                sendToAll = True,
+                storeIfOffline = False,
+                toGroup = groups[ 0 ],
+                fromGroup = groups[ 0 ]
+                )
+
+    def test_NoGroups( self ):
+        groups = self.db.query( models.ServerGroup )
+        someArgs = dict(
+                expectFail = True,
+                name = 'A rule',
+                sendToAll = True,
+                storeIfOffline = True
+                )
+        self.AddRule( **someArgs )
+        self.AddRule( 
+                toGroup=groups[ 0 ],
+                **someArgs
+                )
+        self.AddRule(
+                fromGroup=groups[ 0 ],
+                **someArgs
+                )
+
+    def test_InvalidGroups( self ):
+        FakeGroup = namedtuple( 'FakeGroup', ['id'] )
+        fake = FakeGroup( 99999 )
+        groups = self.db.query( models.ServerGroup )
+        someArgs = dict(
+                expectFail = True,
+                name = 'A rule',
+                sendToAll = True,
+                storeIfOffline = True
+                )
+        self.AddRule(
+                toGroup = fake,
+                fromGroup = fake,
+                **someArgs
+                )
+        self.AddRule(
+                toGroup = fake,
+                fromGroup = groups[ 0 ],
+                **someArgs
+                )
+        self.AddRule(
+                toGroup = groups[ 0 ],
+                fromGroup = fake,
+                **someArgs
+                )
+
+    def test_Add( self ):
+        groups = self.db.query( models.ServerGroup )
+        someArgs = {
+                'verifyDb' : True,
+                'sendToAll' : True,
+                'toGroup' : groups[ 0 ],
+                'fromGroup' : groups[ 1 ],
+                }
+        # Test with no filters
+        self.AddRule(
+                name = "Rule 1",
+                **someArgs
+                )
+        self.AddRule(
+                name = "Rule 2",
+                applicationName = "Something",
+                **someArgs
+                )
+        self.AddRule(
+                name = "Rule 3",
+                growlTitle = "SomethingMore",
+                **someArgs
+                )
+        self.AddRule(
+                name = "Rule 4",
+                growlTitle = "FOOOL",
+                applicationName = "Something FOOL",
+                **someArgs
+                )
+
+                
+                
+
+

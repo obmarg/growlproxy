@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "formHelpers.html" import render_field %}
+
+{% block body %}
+<form method='POST' action='.' >
+    {# TODO: jQuery UI all of this stuff up #}
+    {{ form.hidden_tag() }}
+    <h4>Rule Details</h4>
+    <dl title='Rule Details'>
+        {{ render_field( form.name ) }}
+        {{ render_field( form.fromGroup ) }}
+        {{ render_field( form.toGroup ) }}
+        {{ render_field( form.sendToAll ) }}
+        {{ render_field( form.storeIfOffline ) }}
+    </dl>
+    <h4>Filtering</h4>
+    <dl title='Filtering'>
+        {{ render_field( form.applicationName ) }}
+        {{ render_field( form.growlTitle ) }}
+    </dl>
+    <input type='submit' value='Submit' />
+</form>
+{% endblock %}
