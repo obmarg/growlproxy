@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 from setuptools import setup, find_packages
 
 setup(
         name = "growlproxy",
         version = "0.1",
         packages = find_packages(),
-        scripts = [ 'growlproxyui.py', 'growlproxy.py' ],
+        scripts = [ 'growlproxyui.py', 'growlproxyrun.py' ],
 
         #TODO: Improve this dependency list
         #       Check things missing, maybe remove mox
@@ -15,7 +16,7 @@ setup(
             'WTForms>=0.6.3',
             'Twisted>=11.1.0',
             'SQLAlchemy>=0.7.5',
-            'FlashWTF>=0.5.2',
+            'Flask-WTF>=0.5.2',
             'Flask>=0.8'
             ],
 
