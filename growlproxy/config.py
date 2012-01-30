@@ -5,7 +5,7 @@ from .models import ConfigOption
 class ConfigManager(object):
 
     defaults = {
-            'forwardAll' : True,
+            'forwardAll' : False,
             'password' : 'password'
             }
 

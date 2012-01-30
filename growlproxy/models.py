@@ -175,12 +175,16 @@ class ForwardRule(Base):
     # Store the growl for later if servers are offline
     storeIfOffline = Column( Boolean, nullable=False )       
 
-    # TODO: Find out how to make the below link straight to a list of servers?
-    #       Also, maybe add a backref
-    #fromServerGroup = relationship( "ServerGroup" )
-    #toServerGroup = relationship( "ServerGroup" )
-    # TODO: Bet the above doesn't work because there's 2 seperate things.
-    #       Figure out how to fix it and then uncomment
+    fromServerGroup = relationship( 
+            "ServerGroup",
+            backref="forwardFromRules",
+            primaryjoin="ServerGroup.id==ForwardRule.fromServerGroupId",
+            )
+    toServerGroup = relationship( 
+            "ServerGroup",
+            backref="forwardToRules",
+            primaryjoin="ServerGroup.id==ForwardRule.toServerGroupId"
+            )
 
     def __init__(
             self,
@@ -225,5 +229,28 @@ class RuleFilter(Base):
             ForwardRule, 
             backref=backref( 'filters', passive_deletes=True )
             )
+    
+    def MatchesMessage( self, message ):
+        '''
+        Checks if the message matches this rule
+        @param: message     The message
+        @return:            True if we have a match
+        '''
+        rv = True
+        if message.headers:
+            headers = message.headers
+        else:
+            raise Exception( "Message did not contain headers" )
+        
+        if self.applicationName:
+            rv = rv and headers[ 'Application-Name' ] == self.applicationName
+        if self.growlTitle:
+            rv = rv and headers[ 'Notification-Title' ] == self.growlTitle
+        if self.growlContentsRegex:
+            m = self.growContentsRegex.match( headers[ 'Notification-Text' ] )
+            if m is None:
+                rv = False
+        return rv
+                
 
 
