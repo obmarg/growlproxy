@@ -1,10 +1,9 @@
 
 import json
 from flask import request, session, g, redirect, url_for, render_template
-from flask import abort, flash
+from flask import abort, flash, jsonify
 from growlproxy.ui import app, LoadDb, forms
 from growlproxy import models
-
 
 @app.before_request
 def BeforeRequest():
@@ -170,3 +169,33 @@ def AddRule():
         flash('Success')
         return redirect( url_for( 'RuleList' ) )
     return render_template( 'addRule.html', form=form )
+
+#######
+# JSON REST API Stuff starts here
+#######
+
+@app.route('/api/servers', methods=[ 'GET' ] )
+def ServersApi():
+    # For now, just implement the GET functionality
+    # Send down all the server details, bar group membership
+    serverQuery = g.db.query( 
+            models.Server.id,
+            models.Server.name,
+            models.Server.remoteHost,
+            models.Server.receiveGrowls,
+            models.Server.forwardGrowls,
+            models.Server.userRegistered
+            )
+    # This is a fucking ugly hack, but I can't find a better way
+    # to do it just now
+    colList = [ 
+            'id',
+            'name',
+            'remoteHost',
+            'receiveGrowls',
+            'forwardGrowls',
+            'userRegistered'
+            ]
+    serverList = [ dict( zip(colList,server) ) for server in serverQuery ]
+    return jsonify( servers=serverList )
+
