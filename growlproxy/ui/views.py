@@ -203,10 +203,10 @@ class RestApi(object):
                 #TODO: Return some JSON?
                 return "OK"
             elif request.method == 'PUT':
-                update = mapping.Update( id, request.json )
+                update = mappings.Update( id, request.json )
                 return jsonify( update )
             elif request.method == 'DELETE':
-                mapping.Delete( id )
+                mappings.Delete( id )
                 #TODO: Figure out what to return here
                 return "OK"
             # Must be a get.  Retreive stuff
@@ -233,30 +233,18 @@ class RestApi(object):
         return InnerFunc
 
 @RestApi( '/api/servers', 'servers' )
-def ServersApi2():
-    return api.Servers()
+def ServersApi():
+    #return api.Servers()
+    return api.SimpleApi(
+                models.Server,
+                {
+                    'id' : models.Server.id,
+                    'name' : models.Server.name,
+                    'remoteHost' : models.Server.remoteHost,
+                    'receiveGrowls' : models.Server.receiveGrowls,
+                    'forwardGrowls' : models.Server.forwardGrowls,
+                    'userRegistered' : models.Server.userRegistered
+                    },
+                models.Server.id
+                )
 
-#@app.route('/api/servers', defaults={ 'id' : None }, methods=[ 'GET', 'POST' ] )
-#@app.route('/api/servers/<int:id>', methods=[ 'GET', 'PUT', 'DELETE' ])
-def ServersApi(id):
-    if request.method=='POST':
-        api.AddServer( request.json )
-        #TODO: Return some JSON?
-        return "OK"
-    elif request.method == 'PUT':
-        update = api.UpdateServer( id, request.json )
-        return jsonify( update )
-    elif request.method == 'DELETE':
-        api.DeleteServer( id )
-        #TODO: Figure out what to return here
-        return "OK"
-    # Send down all the server details, bar group membership
-    filterFunc = None
-    if id:
-        filterFunc = lambda x: x.filter( models.Server.id == id )
-    serverList = api.GetServerJSON()
-    if id:
-        assert len( serverList ) < 2
-        return jsonify( serverList[0] )
-    else:
-        return jsonify( servers=serverList )

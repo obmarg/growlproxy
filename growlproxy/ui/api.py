@@ -1,65 +1,89 @@
 from flask import g
-from growlproxy import models
 
-class Servers(object):
-    def GetList( self, filterFunc = None ):
+class SimpleApi(object):
+    def __init__( self, model, mappingDict, filterObj=None ):
         '''
-        Returns a server list suitable for use by JSON
-        @param: filterFunc      Optional function to use to filter the query
+        Constructor
+        @param: model          The model to operate on
+        @param: mappingDict    Dictionary mapping { jsonName : modelProperty }
+        @param: filterFunc     Filter function for Read operations
         '''
-        serverQuery = g.db.query( 
-                models.Server.id,
-                models.Server.name,
-                models.Server.remoteHost,
-                models.Server.receiveGrowls,
-                models.Server.forwardGrowls,
-                models.Server.userRegistered
+        self.model = model
+        self.mappingDict = mappingDict
+        self.filterObj = filterObj
+
+    def _FilterQuery(self, query, id):
+        '''
+        Filters a query by id
+        @param:    query     The query to filter
+        @param:    id        The id to query for 
+        @returns             The filtered query
+        '''
+        if id:
+            return query.filter( self.filterObj == id )
+        else:
+            return query
+
+    def _GetList(self, id):
+        '''
+        Returns a list suitable for use by JSON
+        @param: id  The id of the item to return
+        '''
+        query = g.db.query(
+                *self.mappingDict.itervalues()
                 )
-        if filterFunc:
-            serverQuery = filterFunc( serverQuery )
-        # This is a fucking ugly hack, but I can't find a better way
-        # to do it just now
-        colList = [ 
-                'id',
-                'name',
-                'remoteHost',
-                'receiveGrowls',
-                'forwardGrowls',
-                'userRegistered'
-                ]
-        return [ dict( zip(colList,server) ) for server in serverQuery ]
+        query = self._FilterQuery( query, id )
+        colList = self.mappingDict.keys()
+        return [ dict( zip(colList,item) ) for item in query ]
 
     def Read( self, id ):
         '''
-        Reads a list of servers
-        @param: id  The id of the server to return
-        @return     A list of server(s)
+        Reads a list of items
+        @param: id  The id of the item to return
+        @return     A list of item(s)
         '''
-        if id:
-            return self.GetList( lambda q: q.filter( models.Server.id == id ) )
-        else:
-            return self.GetList()
+        return self._GetList( id )
 
-    def Create( self, params ):
+    def _ConvertParameters(self, params):
         '''
-        Creates a server
-        @param: params  The details of the server to create
+        Takes in a parameter dict (generated from json) and converts to 
+        dict for passing to sqlalchemy
+        @param: params        The json generated input parameters
+        @reutrn:              A dict suitable for passing to sqlalchemy
         '''
-        pass
+        rv = {}
+        for key, value in params.iteritems():
+            newKey = self.mappingDict[ key ].key
+            rv[ newKey ] = value
+        return rv
 
     def Update( self, id, params ):
         '''
-        Updates a server
-        @param: id      The id of the server to update
+        Does an update
+        @param: id      The id of the item to update
         @param: params  The parameters of the server to update
         @return         The new server record
+        '''
+        #TODO: Some validation etc. would be nice
+        if id is None:
+            raise Exception
+        query = self._FilterQuery( g.db.query( self.model ), id )
+        query.update(
+            self._ConvertParameters( params ),
+            False
+            )
+        return params
+
+    def Create( self, params ):
+        '''
+        Creates an item
+        @param: params  The details of the item to create
         '''
         pass
 
     def Delete( self, id ):
         '''
-        Deletes a server
-        @param: id      The id of the server to update
+        Deletes an item
+        @param: id      The id of the item to delete
         '''
         pass
-

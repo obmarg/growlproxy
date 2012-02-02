@@ -23,8 +23,8 @@ define([
         this.currentView.close();
         this.currentView = null;
       }
-      $( "#mainPanel" ).html("<div id='currentView'></div>");
-      newView.el = $("#currentView");
+      $( "#mainPanel" ).html("");
+      $( "#mainPanel" ).append( newView.el );
       newView.render();
       this.currentView = newView;
     },

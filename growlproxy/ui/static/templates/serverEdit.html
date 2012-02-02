@@ -1,25 +1,28 @@
 <!-- TODO: Make a css class for hidden shit -->
-<form method='', action='' >
     <!-- TODO: csrf stuff -->
-    <dl>
-        <dt>Name</dt>
-        <dd><input type='text' name='name' value='{{ name }}'/></dd>
-        <dt>Remote Host</dt>
-        <dd>
-        	<input type='text' name='remoteHost' value='{{ remoteHost }}' />
-        </dd>
-        <dt>Receive Growls</dt> <!-- Figure out the mustache for checkboxes -->
-        <dd><input 
-            type='checkbox' 
-            name='receiveGrowls'
-            {{#receiveGrowls}} checked {{/receiveGrowls}}
-            /></dd>
-        <dt>Forward Growls</dt>
-        <dd><input
-            type='checkbox'
-            name='forwardGrowls'
-            {{#forwardGrowls}} checked {{/forwardGrowls}}
-            /></dd>
-    </dl>
-    <input type='submit' name='submit' />
-</form>
+    <dt>Name</dt>
+    <dd><input type='text' name='name' value='{{ name }}' id='serverNameInput'/></dd>
+    <dt>Remote Host</dt>
+    <dd>
+    	<input 
+    		type='text'
+    		name='remoteHost'
+    		value='{{ remoteHost }}'
+    		id='serverRemoteHostInput'
+    		/>
+    </dd>
+    <dt>Receive Growls</dt> <!-- Figure out the mustache for checkboxes -->
+    <dd><input 
+        type='checkbox' 
+        name='receiveGrowls'
+        {{#receiveGrowls}} checked {{/receiveGrowls}}
+        id='serverReceiveGrowls'
+        /></dd>
+    <dt>Forward Growls</dt>
+    <dd><input
+        type='checkbox'
+        name='forwardGrowls'
+        {{#forwardGrowls}} checked {{/forwardGrowls}}
+        id='serverForwardGrowls'
+        /></dd>
+<button class='submitServer'>Submit</button>
