@@ -25,31 +25,4 @@
 <div id="mainPanel">
 
 </div>
-{% raw %}
-<div id="serverForm" style='visibility:hidden'>
-    <!-- TODO: Make a css class for hidden shit -->
-    <form method='', action='' >
-        <!-- TODO: csrf stuff -->
-        <dl>
-            <dt>Name</dt>
-            <dd><input type='text' name='name' >{{ name }}</input></dd>
-            <dt>Remote Host</dt>
-            <dd><input type='text' name='remoteHost'>{{ remoteHost }}</input></dd>
-            <dt>Receive Growls</dt> <!-- Figure out the mustache for checkboxes -->
-            <dd><input 
-                type='checkbox' 
-                name='receiveGrowls'
-                {{#receiveGrowls}} checked {{/receiveGrowls}}
-                /></dd>
-            <dt>Forward Growls</dt>
-            <dd><input
-                type='checkbox'
-                name='forwardGrowls'
-                {{#forwardGrowls}} checked {{/forwardGrowls}}
-                /></dd>
-        </dl>
-        <input type='submit' name='submit' />
-    </form>
-</div>
-{% endraw %}
 {% endblock %}

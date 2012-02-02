@@ -5,6 +5,16 @@
 var Mustache = (typeof module !== "undefined" && module.exports) || {};
 
 (function (exports) {
+  var root = this;
+  
+  var previousMustache = root.Mustache;
+  
+  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
+  // previous owner. Returns a reference to the Underscore object.
+  exports.noConflict = function() {
+    root.Mustache = previousMustache;
+    return this;
+  };
 
   exports.name = "mustache.js";
   exports.version = "0.5.0-dev";

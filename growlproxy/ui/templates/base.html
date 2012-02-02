@@ -3,54 +3,20 @@
         <title>
         Growl Proxy
         </title>
-        <script 
-            type='text/javascript' 
-            src='{{ url_for('static', filename='jquery/js/jquery-1.7.1.js') }}' 
-            >
-        </script>
-        <script 
-            type='text/javascript' 
-            src='{{ url_for('static', filename='jquery/js/jquery-ui-1.8.16.custom.min.js') }}' 
-            >
-        </script>
-        <script 
-            type='text/javascript' 
-            src='{{ url_for('static', filename='jquery/js/jquery.qtip.min.js') }}' 
-            >
-        </script>
-        <script
-            type='text/javascript'
-            src='{{ url_for('static', filename='underscore/underscore.js') }}'
-            >
-        </script>
-        <script
-            type='text/javascript'
-            src='{{ url_for('static', filename='backbone/backbone.js') }}'
-            >
-        </script>
-        <script
-            type='text/javascript'
-            src='{{ url_for('static', filename='mustache/mustache.js') }}'
-            >
-        </script>
-<!--        <script
-            type='text/javascript'
-            src='{{ url_for('static', filename='jstree/jquery.jstree.js') }}'
-            >-->
-        </script>
-        <script
-            type='text/javascript'
-            src='{{ url_for('static', filename='lib.js') }}'
-            >
-        </script>
+		<script
+			type="text/javascript"
+			data-main="{{ url_for( 'static', filename='main.js' )}}"
+			src="{{ url_for( 'static', filename='libs/require/require.min.js' ) }}"
+			>
+		</script>
         <link
             rel='stylesheet'
             type='text/css'
-            href='{{ url_for( 'static', filename='jquery/css/blitzer/jquery-ui-1.8.16.custom.css' )}}' />
+            href='{{ url_for( 'static', filename='libs/jquery/css/blitzer/jquery-ui-1.8.16.custom.css' )}}' />
         <link  
             orel='stylesheet' 
             type='text/css' 
-            href='{{ url_for( 'static', filename='jquery/css/jquery.qtip.min.css') }}' />
+            href='{{ url_for( 'static', filename='libs/jquery/css/jquery.qtip.min.css') }}' />
         {% block additionalHeader %}
         {% endblock %}
         <style type='text/css'>
@@ -88,7 +54,7 @@
                 text-align: center;
             }
         </style>
-        <script type='text/javascript'>
+        <!-- <script type='text/javascript'>
             {% if confirmDeleteDialog %}
             currentDelete = ""
             function deleteDialog( id ) {
@@ -126,7 +92,7 @@
                 {% endif %}
 
             });
-        </script>
+        </script>-->
     </head>
     <body>
     {% block body %}
