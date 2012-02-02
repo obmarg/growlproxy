@@ -4,6 +4,7 @@ from flask import request, session, g, redirect, url_for, render_template
 from flask import abort, flash, jsonify
 from growlproxy.ui import app, LoadDb, forms
 from growlproxy import models
+from growlproxy.ui import api
 
 @app.before_request
 def BeforeRequest():
@@ -174,34 +175,88 @@ def AddRule():
 # JSON REST API Stuff starts here
 #######
 
-@app.route('/api/servers', defaults={ 'id' : None }, methods=[ 'GET' ] )
-@app.route('/api/servers/<int:id>', methods=[ 'GET' ])
+class RestApi(object):
+    '''
+    Decorator for REST API Functions
+    @param: view    The view function to decorate
+                    Function should return an object
+                    mapping CRUD to functions to call
+                    with callable members for
+                    [ 'Create', 'Read', 'Update', 'Delete' ]
+    @param: baseUrl The base url for the REST operations
+                    with no trailing slash
+    @paramL readParamName   The name of the dict key that
+                            will be used to store the list
+                            returned by read on multiple
+                            objects
+    '''
+
+    def __init__( self, baseUrl, readParamName ):
+        self.baseUrl = baseUrl
+        self.readParamName = readParamName
+
+    def __call__( self, view ):
+        mappings = view()
+        def InnerFunc(id):
+            if request.method=='POST':
+                mappings.Create( request.json )
+                #TODO: Return some JSON?
+                return "OK"
+            elif request.method == 'PUT':
+                update = mapping.Update( id, request.json )
+                return jsonify( update )
+            elif request.method == 'DELETE':
+                mapping.Delete( id )
+                #TODO: Figure out what to return here
+                return "OK"
+            # Must be a get.  Retreive stuff
+            rvlist = mappings.Read(id)
+            if id:
+                assert len( rvlist ) < 2
+                return jsonify( rvlist[0] )
+            else:
+                return jsonify( { self.readParamName : rvlist } ) 
+        # Set up the url rules
+        app.add_url_rule( 
+                self.baseUrl,
+                view.__name__,
+                InnerFunc,
+                defaults = { 'id' : None },
+                methods = [ 'GET', 'POST' ]
+                )
+        app.add_url_rule(
+                self.baseUrl + '/<int:id>',
+                view.__name__,
+                InnerFunc,
+                methods = [ 'GET', 'PUT', 'DELETE' ]
+                )
+        return InnerFunc
+
+@RestApi( '/api/servers', 'servers' )
+def ServersApi2():
+    return api.Servers()
+
+#@app.route('/api/servers', defaults={ 'id' : None }, methods=[ 'GET', 'POST' ] )
+#@app.route('/api/servers/<int:id>', methods=[ 'GET', 'PUT', 'DELETE' ])
 def ServersApi(id):
-    # For now, just implement the GET functionality
+    if request.method=='POST':
+        api.AddServer( request.json )
+        #TODO: Return some JSON?
+        return "OK"
+    elif request.method == 'PUT':
+        update = api.UpdateServer( id, request.json )
+        return jsonify( update )
+    elif request.method == 'DELETE':
+        api.DeleteServer( id )
+        #TODO: Figure out what to return here
+        return "OK"
     # Send down all the server details, bar group membership
-    serverQuery = g.db.query( 
-            models.Server.id,
-            models.Server.name,
-            models.Server.remoteHost,
-            models.Server.receiveGrowls,
-            models.Server.forwardGrowls,
-            models.Server.userRegistered
-            )
+    filterFunc = None
     if id:
-        serverQuery = serverQuery.filter( models.Server.id == id )
-    # This is a fucking ugly hack, but I can't find a better way
-    # to do it just now
-    colList = [ 
-            'id',
-            'name',
-            'remoteHost',
-            'receiveGrowls',
-            'forwardGrowls',
-            'userRegistered'
-            ]
-    serverList = [ dict( zip(colList,server) ) for server in serverQuery ]
+        filterFunc = lambda x: x.filter( models.Server.id == id )
+    serverList = api.GetServerJSON()
     if id:
-        assert len( serverList ) == 1
+        assert len( serverList ) < 2
         return jsonify( serverList[0] )
     else:
         return jsonify( servers=serverList )
