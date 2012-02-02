@@ -174,8 +174,9 @@ def AddRule():
 # JSON REST API Stuff starts here
 #######
 
-@app.route('/api/servers', methods=[ 'GET' ] )
-def ServersApi():
+@app.route('/api/servers', defaults={ 'id' : None }, methods=[ 'GET' ] )
+@app.route('/api/servers/<int:id>', methods=[ 'GET' ])
+def ServersApi(id):
     # For now, just implement the GET functionality
     # Send down all the server details, bar group membership
     serverQuery = g.db.query( 
@@ -186,6 +187,8 @@ def ServersApi():
             models.Server.forwardGrowls,
             models.Server.userRegistered
             )
+    if id:
+        serverQuery = serverQuery.filter( models.Server.id == id )
     # This is a fucking ugly hack, but I can't find a better way
     # to do it just now
     colList = [ 
@@ -197,5 +200,8 @@ def ServersApi():
             'userRegistered'
             ]
     serverList = [ dict( zip(colList,server) ) for server in serverQuery ]
-    return jsonify( servers=serverList )
-
+    if id:
+        assert len( serverList ) == 1
+        return jsonify( serverList[0] )
+    else:
+        return jsonify( servers=serverList )

@@ -3,9 +3,11 @@
     <!-- TODO: csrf stuff -->
     <dl>
         <dt>Name</dt>
-        <dd><input type='text' name='name' >{{ name }}</input></dd>
+        <dd><input type='text' name='name' value='{{ name }}'/></dd>
         <dt>Remote Host</dt>
-        <dd><input type='text' name='remoteHost'>{{ remoteHost }}</input></dd>
+        <dd>
+        	<input type='text' name='remoteHost' value='{{ remoteHost }}' />
+        </dd>
         <dt>Receive Growls</dt> <!-- Figure out the mustache for checkboxes -->
         <dd><input 
             type='checkbox' 
