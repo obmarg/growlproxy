@@ -4,25 +4,47 @@ define([
   'Backbone',
   'router', // Request router.js
   'models/serverList',
-  'views/serverListView'
-], function( $, _, Backbone, Router, ServerList, ServerListView ){
-  var initialize = function(){
-    // Pass in our Router module and call it's initialize function
-    Router.initialize();
-    
-    var servers = new ServerList;
-    
-    var serverList = new ServerListView({ model : servers });
-    
-    //TODO: Bootstrap this stuff, and remove the initial fetch
-    servers.fetch({
+  'views/serverListView',
+  'models/groupList',
+  'views/groupListView',
+], function( 
+    $,
+    _,
+    Backbone,
+    Router,
+    ServerList,
+    ServerListView,
+    GroupList,
+    GroupListView
+    ){
+  
+    var initialize = function(){
+      // Pass in our Router module and call it's initialize function
+      Router.initialize();
+      
+      var servers = new ServerList;
+      
+      var serverList = new ServerListView({ model : servers });
+      
+      //TODO: Bootstrap this stuff, and remove the initial fetch
+      servers.fetch({
+          success: function(coll, response){
+              serverList.render();
+          }
+      });
+      
+      var groups = new GroupList;
+      
+      var groupList = new GroupListView({ model : groups });
+      
+      groups.fetch({
         success: function(coll, response){
-            serverList.render();
+            groupList.render();
         }
-    });
-  }
-
-  return {
-    initialize: initialize
-  };
+      });
+    }
+  
+    return {
+      initialize: initialize
+    };
 });

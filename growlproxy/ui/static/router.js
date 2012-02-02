@@ -5,11 +5,14 @@ define([
   'Backbone',
   'models/server',
   'views/serverEditView',
-], function($, _, Backbone, Server, SeverEditView){
+  'models/group',
+  'views/groupEditView',
+], function($, _, Backbone, Server, SeverEditView, Group, GroupEditView){
   
   var AppRouter = Backbone.Router.extend({
     routes: {
-      'servers/:id' : "server"
+      'servers/:id' : "server",
+      'groups/:id' : "group"
     },
 
     initialize: function(){
@@ -32,6 +35,11 @@ define([
     server: function( id ){
       // Display the edit server stuff
       view = new SeverEditView({ 'model' : new Server({ 'id' : id }) });
+      this.changeView( view );
+    },
+    
+    group: function( id ){
+      view = new GroupEditView({ model : new Group({ 'id' : id }) });
       this.changeView( view );
     }
   });

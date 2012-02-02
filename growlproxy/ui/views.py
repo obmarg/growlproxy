@@ -192,6 +192,8 @@ class RestApi(object):
     '''
 
     def __init__( self, baseUrl, readParamName ):
+        #TODO: this should really accept parameters for what methods
+        #        we want to allow (CRUD methods, not REST)
         self.baseUrl = baseUrl
         self.readParamName = readParamName
 
@@ -234,7 +236,6 @@ class RestApi(object):
 
 @RestApi( '/api/servers', 'servers' )
 def ServersApi():
-    #return api.Servers()
     return api.SimpleApi(
                 models.Server,
                 {
@@ -248,3 +249,17 @@ def ServersApi():
                 models.Server.id
                 )
 
+@RestApi( '/api/groups', 'groups' )
+def GroupsApi():
+    # SimpleApi isn't really that great for Groups, because it can only really
+    # handle simple data.  Which this won't be, unless I split the saving into
+    # 2 seperate operations (which is possible I suppose, so long as I ensure
+    # client side validation is done first)
+    return api.SimpleApi(
+        models.ServerGroup,
+        {
+            'id' : models.ServerGroup.id,
+            'name' : models.ServerGroup.name
+            },
+        models.ServerGroup.id
+        );

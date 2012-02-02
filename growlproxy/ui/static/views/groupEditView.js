@@ -3,14 +3,12 @@ define([
   'Underscore',
   'Backbone',
   'Mustache',
-  'text!templates/serverEdit.html'
+  'text!templates/groupEdit.html'
 ], function($, _, Backbone,Mustache,Template){
   
-  //TODO: Think there's a chance this'll be called before
-  //      the page is loaded.  Fix that problem somehow
-  var ServerEditView = Backbone.View.extend({
+  var GroupEditView = Backbone.View.extend({
     tagName: 'dl',
-    id: 'serverEdit',
+    id: 'groupEdit',
     
     template: Template,
 
@@ -40,13 +38,10 @@ define([
     
     submit: function(){
       this.model.save({
-        name : $('#serverNameInput').val(),
-        remoteHost : $('#serverRemoteHostInput').val(), 
-        receiveGrowls : $('#serverReceiveGrowls').attr('checked') !== undefined,
-        forwardGrowls : $('#serverForwardGrowls').attr('checked') !== undefined,
+        name : $('#groupNameInput').val(),
       });
     }
   });
   
-  return ServerEditView;
+  return GroupEditView;
 });

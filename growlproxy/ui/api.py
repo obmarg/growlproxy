@@ -1,16 +1,16 @@
 from flask import g
 
 class SimpleApi(object):
-    def __init__( self, model, mappingDict, filterObj=None ):
+    def __init__( self, model, mappingDict, idObj ):
         '''
         Constructor
         @param: model          The model to operate on
         @param: mappingDict    Dictionary mapping { jsonName : modelProperty }
-        @param: filterFunc     Filter function for Read operations
+        @param: idObj          sqlalchemy id object
         '''
         self.model = model
         self.mappingDict = mappingDict
-        self.filterObj = filterObj
+        self.idObj = idObj
 
     def _FilterQuery(self, query, id):
         '''
@@ -20,7 +20,7 @@ class SimpleApi(object):
         @returns             The filtered query
         '''
         if id:
-            return query.filter( self.filterObj == id )
+            return query.filter( self.idObj == id )
         else:
             return query
 
