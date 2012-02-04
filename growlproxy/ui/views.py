@@ -179,69 +179,91 @@ def AddRule():
 # JSON REST API Stuff starts here
 #######
 
-class RestApi(object):
+def CreateRestView( 
+        apiObject, name, idUrl=None, anonUrl=None, baseUrl=None,
+        create=True, read=True, update=True, delete=True 
+        ):
     '''
-    Decorator for REST API Functions
-    @param: view    The view function to decorate
-                    Function should return an object
-                    mapping CRUD to functions to call
-                    with callable members for
-                    [ 'Create', 'Read', 'Update', 'Delete' ]
-    @param: baseUrl The base url for the REST operations
-                    with no trailing slash
-    @paramL readParamName   The name of the dict key that
-                            will be used to store the list
-                            returned by read on multiple
-                            objects
+    Creates a REST API view function and registers it with the app
+    @param: apiObject       The api object to pass the CRUD operations to
+    @param: name            The name of the view
+    @param: baseUrl         The base url for this operation.  If this is 
+                            supplied, then idUrl & anonUrl will be determined
+                            based on it.
+    @param: idUrl           The url that handles operations with an ID
+    @param: anonUrl         The url that handles operations without an ID
+    @param: create          If true, create operations allowed
+    @param: read            If true, read opeartions allowed
+    @param: update          If true, update operations allowed
+    @param  delete          If true, delete operations allowed
+    @return A view function to handle this REST API 
     '''
+    if baseUrl and baseUrl[-1] == '/':
+        # Strip out any trailing slash
+        baseUrl = baseUrl[:-1]
 
-    def __init__( self, baseUrl, readParamName ):
-        #TODO: this should really accept parameters for what methods
-        #        we want to allow (CRUD methods, not REST)
-        self.baseUrl = baseUrl
-        self.readParamName = readParamName
-
-    def __call__( self, view ):
-        mappings = view()
-        def InnerFunc(id):
-            if request.method=='POST':
-                mappings.Create( request.json )
-                #TODO: Return some JSON?
-                return "OK"
-            elif request.method == 'PUT':
-                update = mappings.Update( id, request.json )
-                return jsonify( update )
-            elif request.method == 'DELETE':
-                mappings.Delete( id )
-                #TODO: Figure out what to return here
-                return "OK"
-            # Must be a get.  Retreive stuff
-            rvlist = mappings.Read(id)
-            if id:
-                assert len( rvlist ) < 2
-                return jsonify( rvlist[0] )
-            else:
-                return jsonify( { self.readParamName : rvlist } ) 
-        # Set up the url rules
-        app.add_url_rule( 
-                self.baseUrl,
-                view.__name__,
-                InnerFunc,
-                defaults = { 'id' : None },
-                methods = [ 'GET', 'POST' ]
-                )
+    def RestView( *posargs, **kwargs ):
+        '''
+        A REST API view
+        Passes all parameters on to API Object methods
+        '''
+        if request.method=='POST' and create:
+            apiObject.Create( request.json, *posargs, **kwargs )
+            #TODO: Return some JSON?
+            return "OK"
+        elif request.method == 'PUT' and update:
+            update = apiObject.Update( request.json, *posargs, **kwargs )
+            return jsonify( update )
+        elif request.method == 'DELETE' and delete:
+            apiObject.Delete( *posargs, **kwargs )
+            #TODO: Figure out what to return here
+            return "OK"
+        elif request.method == 'GET' and read:
+        # Must be a get.  Retreive stuff
+            rv = apiObject.Read( *posargs, **kwargs )
+            return jsonify( rv ) 
+        abort( 500 )
+    # Set up the url rules
+    if idUrl or baseUrl:
+        if not idUrl:
+            idUrl = baseUrl + '/<int:id>'
+        methods = []
+        if read:
+            methods += [ 'GET' ]
+        if update:
+            methods += [ 'PUT' ]
+        if delete:
+            methods += [ 'DELETE' ]
         app.add_url_rule(
-                self.baseUrl + '/<int:id>',
-                view.__name__,
-                InnerFunc,
-                methods = [ 'GET', 'PUT', 'DELETE' ]
+            idUrl,
+            name,
+            RestView,
+            methods = methods
+            )
+    if anonUrl or baseUrl:
+        if not anonUrl:
+            anonUrl = baseUrl
+        methods = []
+        if read:
+            methods += [ 'GET' ]
+        if create:
+            methods += [ 'POST' ]
+        app.add_url_rule( 
+                anonUrl,
+                name,
+                RestView,
+                methods = methods
                 )
-        return InnerFunc
+    return RestView
 
-@RestApi( '/api/servers', 'servers' )
-def ServersApi():
-    return api.ServersApi
-    
-@RestApi( '/api/groups', 'groups' )
-def GroupsApi():
-    return api.GroupsApi
+ServersApi = CreateRestView( 
+        api.ServersApi, 
+        'servers', 
+        baseUrl = '/api/servers' 
+        )
+
+GroupsApi = CreateRestView( 
+        api.GroupsApi, 
+        'groups', 
+        baseUrl = '/api/groups'
+        )

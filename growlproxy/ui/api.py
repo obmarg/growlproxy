@@ -3,16 +3,21 @@ from growlproxy import models
 import json
 
 class SimpleApi(object):
-    def __init__( self, model, mappingDict, idObj ):
+    def __init__( self, model, mappingDict, idObj, listKeyName ):
         '''
         Constructor
-        @param: model          The model to operate on
-        @param: mappingDict    Dictionary mapping { jsonName : modelProperty }
-        @param: idObj          sqlalchemy id object
+        @param: model           The model to operate on
+        @param: mappingDict     Dictionary mapping { jsonName : modelProperty }
+        @param: idObj           sqlalchemy id object
+        @param: listKeyName     The key to use for lists that are wrapped in
+                                dictionaries before being returned
+                                Flask.jsonify refuses to parse lists, so this 
+                                is required
         '''
         self.model = model
         self.mappingDict = mappingDict
         self.idObj = idObj
+        self.listKeyName = listKeyName
 
     def _FilterQuery(self, query, id):
         '''
@@ -26,7 +31,7 @@ class SimpleApi(object):
         else:
             return query
 
-    def _GetList(self, id):
+    def GetList(self, id=None):
         '''
         Returns a list suitable for use by JSON
         @param: id  The id of the item to return
@@ -44,7 +49,11 @@ class SimpleApi(object):
         @param: id  The id of the item to return
         @return     A list of item(s)
         '''
-        return self._GetList( id )
+        ls = self.GetList( id )
+        if id:
+            return ls[0]
+        else:
+            return { self.listKeyName : ls } 
 
     def _ConvertParameters(self, params):
         '''
@@ -100,7 +109,8 @@ ServersApi = SimpleApi(
         'forwardGrowls' : models.Server.forwardGrowls,
         'userRegistered' : models.Server.userRegistered
         },
-    models.Server.id
+    models.Server.id,
+    'servers'
     )
 
 # SimpleApi isn't really that great for Groups, because it can only really
@@ -113,12 +123,13 @@ GroupsApi = SimpleApi(
         'id' : models.ServerGroup.id,
         'name' : models.ServerGroup.name
         },
-    models.ServerGroup.id
+    models.ServerGroup.id,
+    'groups'
     );
 
 def GetBootstrapJson():
     #TODO: Do I want to check these json blobs for xss injection type stuff?
     return {
-        'servers' : json.dumps( ServersApi.Read() ),
-        'groups' : json.dumps( GroupsApi.Read() )
+        'servers' : json.dumps( ServersApi.GetList() ),
+        'groups' : json.dumps( GroupsApi.GetList() )
         }
