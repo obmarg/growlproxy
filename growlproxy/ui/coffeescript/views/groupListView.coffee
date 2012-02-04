@@ -6,6 +6,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupLi
     initialize: ->
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
+      @render()
 
     render: ->
       js = @model.toJSON()
@@ -14,5 +15,10 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupLi
         groups: js
       )
       this
+
+     onClose: ->
+       @model.unbind "change", @render, this
+       @model.unbind "destroy", @render, this
+
   )
   GroupListView

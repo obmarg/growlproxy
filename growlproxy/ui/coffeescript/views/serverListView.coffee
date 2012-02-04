@@ -14,5 +14,10 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverL
         servers: js
       )
       this
+
+     onClose: ->
+       @model.unbind "change", @render, this
+       @model.unbind "destroy", @render, this
+
   )
   ServerListView

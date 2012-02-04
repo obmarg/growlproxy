@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Backbone", "models/server", "views/serverEditView", "models/group", "views/groupEditView", "collections/serverList" ], ($, _, Backbone, Server, SeverEditView, Group, GroupEditView, servers ) ->
+define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "collections/serverList", "collections/groupList" ], ($, _, Backbone, SeverEditView, GroupEditView, servers, groups ) ->
   AppRouter = Backbone.Router.extend(
     routes:
       "servers/:id": "server"
@@ -17,11 +17,11 @@ define [ "jQuery", "Underscore", "Backbone", "models/server", "views/serverEditV
       @currentView = newView
 
     server: (id) ->
-      view = new SeverEditView(model: servers.get(id) )
+      view = new SeverEditView( model: servers.get(id) )
       @changeView view
 
     group: (id) ->
-      view = new GroupEditView(model: new Group(id: id))
+      view = new GroupEditView( model: groups.get(id) )
       @changeView view
   )
   initialize = ->
