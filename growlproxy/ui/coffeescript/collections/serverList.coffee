@@ -5,4 +5,4 @@ define [ "jQuery", "Underscore", "Backbone", "models/server" ], ($, _, Backbone,
     parse: (models, xhr) ->
       models.servers
   )
-  ServerList
+  new ServerList

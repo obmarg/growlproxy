@@ -9,8 +9,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverL
 
     render: ->
       js = @model.toJSON()
-      el = $(@el)
-      el.html Mustache.render(@template,
+      @$el.html Mustache.render(@template,
         servers: js
       )
       this

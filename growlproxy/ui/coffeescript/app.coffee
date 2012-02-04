@@ -1,8 +1,7 @@
-define [ "jQuery", "Underscore", "Backbone", "router", "models/serverList", "views/serverListView", "models/groupList", "views/groupListView" ], ( $, _, Backbone, Router, ServerList, ServerListView, GroupList, GroupListView ) ->
+define [ "jQuery", "Underscore", "Backbone", "router", "collections/serverList", "views/serverListView", "models/groupList", "views/groupListView" ], ( $, _, Backbone, Router, servers, ServerListView, GroupList, GroupListView ) ->
   
   initialize = ->
     Router.initialize()
-    servers = new ServerList
     serverList = new ServerListView(model: servers)
     servers.fetch success: (coll, response) ->
       serverList.render()
