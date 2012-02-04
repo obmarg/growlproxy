@@ -1,5 +1,6 @@
 define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
-  GroupMember = Backbone.Model.extend(initialize: ->
+  GroupMember = Backbone.Model.extend(
+    initialize: ->
   )
   GroupMemberList = Backbone.Collection.extend(
     model: GroupMember
@@ -10,7 +11,7 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
     urlRoot: "api/groups"
     initialize: ->
       @members = new GroupMemberList
-      @members.url = "/groups/" + @id + "/members"
+      @members.url = "/api/groups/" + @id + "/members"
 
     validate: (attrs) ->
   )

@@ -1,22 +1,43 @@
-define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupEdit.html" ], ($, _, Backbone, Mustache, Template) ->
+define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupEdit.html", "text!templates/groupMember.html" ], ($, _, Backbone, Mustache, groupEditTemplate, memberTemplate) ->
   GroupEditView = Backbone.View.extend(
-    tagName: "dl"
+    tagName: "div"
     id: "groupEdit"
-    template: Template
+    template: groupEditTemplate
     initialize: ->
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
-      @model.fetch()  if @model.id
+      @model.members.bind "change", @renderMembers, this
+      @model.members.bind "destroy", @renderMembers, this
+      @model.members.bind "reset", @renderMembers, this
+      if @model.id
+        @model.fetch()
+        @model.members.fetch()
+      @$el.append(
+        "<dl id='groupEditDl'></dl>
+        <ul id='memberList'></ul>
+        <dl id='groupAddMember'></div>"
+      )
+      @render
 
     render: ->
-      $(@el).html Mustache.render(@template, @model.toJSON())
+      $("#groupEditDl").html Mustache.render(@template, @model.toJSON())
       @delegateEvents "click button": "submit"
+
+    renderMembers: ->
+      $("#memberList").html Mustache.render( memberTemplate,
+        members : @model.members.toJSON()
+      )
 
     onClose: ->
       @model.unbind "change", @render, this
       @model.unbind "destroy", @render, this
+      @model.members.unbind "change", @render, this
+      @model.members.unbind "destroy", @render, this
+      @model.members.unbind "reset", @renderMembers, this
 
     submit: ->
       @model.save name: $("#groupNameInput").val()
+      #TODO: Figure out if the members.save is needed
+      @model.members.save()
   )
   GroupEditView

@@ -267,3 +267,11 @@ GroupsApi = CreateRestView(
         'groups', 
         baseUrl = '/api/groups'
         )
+
+GroupMembersApi = CreateRestView(
+        api.GroupMembershipApi,
+        'members',
+        anonUrl = '/api/groups/<int:groupId>/members',
+        idUrl = '/api/groups/<int:groupId>/members/<int:serverId>',
+        update = False,
+        )

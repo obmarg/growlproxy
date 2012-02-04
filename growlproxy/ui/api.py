@@ -19,7 +19,7 @@ class SimpleApi(object):
         self.idObj = idObj
         self.listKeyName = listKeyName
 
-    def _FilterQuery(self, query, id):
+    def _FilterQuery(self, query, id=None):
         '''
         Filters a query by id
         @param:    query     The query to filter
@@ -31,25 +31,30 @@ class SimpleApi(object):
         else:
             return query
 
-    def GetList(self, id=None):
+    def GetList(self, *posargs, **kwargs):
         '''
         Returns a list suitable for use by JSON
-        @param: id  The id of the item to return
+        @param: posargs The positional arguments (passed on to _FilterQuery)
+        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         '''
         query = g.db.query(
                 *self.mappingDict.itervalues()
                 )
-        query = self._FilterQuery( query, id )
+        query = self._FilterQuery( query, *posargs, **kwargs )
         colList = self.mappingDict.keys()
         return [ dict( zip(colList,item) ) for item in query ]
 
-    def Read( self, id=None ):
+    def Read( self, id=None, *posargs, **kwargs ):
         '''
         Reads a list of items
+        @param: posargs The positional arguments (passed on to _FilterQuery)
         @param: id  The id of the item to return
+        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         @return     A list of item(s)
         '''
-        ls = self.GetList( id )
+        if id:
+            kwargs[ 'id' ] = id
+        ls = self.GetList( *posargs, **kwargs )
         if id:
             return ls[0]
         else:
@@ -68,17 +73,18 @@ class SimpleApi(object):
             rv[ newKey ] = value
         return rv
 
-    def Update( self, id, params ):
+    def Update( self, params, *posargs, **kwargs ):
         '''
         Does an update
-        @param: id      The id of the item to update
         @param: params  The parameters of the server to update
+        @param: posargs The positional arguments (passed on to _FilterQuery)
+        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         @return         The new server record
         '''
         #TODO: Some validation etc. would be nice
         if id is None:
             raise Exception
-        query = self._FilterQuery( g.db.query( self.model ), id )
+        query = self._FilterQuery( g.db.query( self.model ), *posargs, **kwargs )
         query.update(
             self._ConvertParameters( params ),
             False
@@ -92,10 +98,11 @@ class SimpleApi(object):
         '''
         pass
 
-    def Delete( self, id ):
+    def Delete( self, *posargs, **kwargs ):
         '''
         Deletes an item
-        @param: id      The id of the item to delete
+        @param: posargs The positional arguments (passed on to _FilterQuery)
+        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         '''
         pass
 
@@ -126,6 +133,34 @@ GroupsApi = SimpleApi(
     models.ServerGroup.id,
     'groups'
     );
+
+class GroupMemberObj( SimpleApi ):
+    def _FilterQuery(self, query, groupId, serverId=None):
+        '''
+        Filters a query by 
+        @param:    query     The query to filter
+        @param:    groupId   The group id to query for 
+        @param:    serverId  The server id to query for
+        @returns             The filtered query
+        '''
+        rv = query.filter( 
+                    models.ServerGroupMembership.groupId == groupId
+                    )
+        if serverId:
+            rv = query.filter( 
+                    models.ServerGroupMembership.serverId == serverId
+                    )
+        return rv.join( "server" )
+
+GroupMembershipApi = GroupMemberObj(
+        models.ServerGroupMembership,
+        {
+            'id' : models.ServerGroupMembership.serverId,
+            'name' : models.Server.name
+            },
+        None,
+        'members'
+        )
 
 def GetBootstrapJson():
     #TODO: Do I want to check these json blobs for xss injection type stuff?
