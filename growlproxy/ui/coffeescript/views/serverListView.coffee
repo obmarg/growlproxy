@@ -6,6 +6,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverL
     initialize: ->
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
+      @render()
 
     render: ->
       js = @model.toJSON()

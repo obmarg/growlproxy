@@ -5,4 +5,6 @@ define [ "jQuery", "Underscore", "Backbone", "models/server" ], ($, _, Backbone,
     parse: (models, xhr) ->
       models.servers
   )
-  new ServerList
+  sl = new ServerList
+  sl.reset( $.parseJSON( serverBootstrap ) )
+  return sl

@@ -3,8 +3,8 @@ define [ "jQuery", "Underscore", "Backbone", "router", "collections/serverList",
   initialize = ->
     Router.initialize()
     serverList = new ServerListView(model: servers)
-    servers.fetch success: (coll, response) ->
-      serverList.render()
+    #servers.fetch success: (coll, response) ->
+    #  serverList.render()
 
     groups = new GroupList
     groupList = new GroupListView(model: groups)

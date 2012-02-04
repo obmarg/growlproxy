@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% block startHeader %}
+<script type='text/javascript' >
+    serverBootstrap = '{{ bootstrap.servers | safe }}';
+    groupBootstrap = '{{ bootstrap.groups | safe }}';
+</script>
+{% endblock %}
+
 {% block body %}
 <div id="menuContainer" ><ul id="menuList">
     <li>

@@ -1,4 +1,6 @@
 from flask import g
+from growlproxy import models
+import json
 
 class SimpleApi(object):
     def __init__( self, model, mappingDict, idObj ):
@@ -36,7 +38,7 @@ class SimpleApi(object):
         colList = self.mappingDict.keys()
         return [ dict( zip(colList,item) ) for item in query ]
 
-    def Read( self, id ):
+    def Read( self, id=None ):
         '''
         Reads a list of items
         @param: id  The id of the item to return
@@ -87,3 +89,36 @@ class SimpleApi(object):
         @param: id      The id of the item to delete
         '''
         pass
+
+ServersApi = SimpleApi(
+    models.Server,
+    {
+        'id' : models.Server.id,
+        'name' : models.Server.name,
+        'remoteHost' : models.Server.remoteHost,
+        'receiveGrowls' : models.Server.receiveGrowls,
+        'forwardGrowls' : models.Server.forwardGrowls,
+        'userRegistered' : models.Server.userRegistered
+        },
+    models.Server.id
+    )
+
+# SimpleApi isn't really that great for Groups, because it can only really
+# handle simple data.  Which this won't be, unless I split the saving into
+# 2 seperate operations (which is possible I suppose, so long as I ensure
+# client side validation is done first)
+GroupsApi = SimpleApi(
+    models.ServerGroup,
+    {
+        'id' : models.ServerGroup.id,
+        'name' : models.ServerGroup.name
+        },
+    models.ServerGroup.id
+    );
+
+def GetBootstrapJson():
+    #TODO: Do I want to check these json blobs for xss injection type stuff?
+    return {
+        'servers' : json.dumps( ServersApi.Read() ),
+        'groups' : json.dumps( GroupsApi.Read() )
+        }

@@ -29,7 +29,11 @@ def TeardownRequest( exception ):
 
 @app.route('/')
 def Index():
-    return render_template( 'index.html' )
+    print api.GetBootstrapJson()
+    return render_template( 
+            'index.html',
+            bootstrap=api.GetBootstrapJson()
+            )
 
 @app.route('/servers/')
 def ServerList():
@@ -236,30 +240,8 @@ class RestApi(object):
 
 @RestApi( '/api/servers', 'servers' )
 def ServersApi():
-    return api.SimpleApi(
-                models.Server,
-                {
-                    'id' : models.Server.id,
-                    'name' : models.Server.name,
-                    'remoteHost' : models.Server.remoteHost,
-                    'receiveGrowls' : models.Server.receiveGrowls,
-                    'forwardGrowls' : models.Server.forwardGrowls,
-                    'userRegistered' : models.Server.userRegistered
-                    },
-                models.Server.id
-                )
-
+    return api.ServersApi
+    
 @RestApi( '/api/groups', 'groups' )
 def GroupsApi():
-    # SimpleApi isn't really that great for Groups, because it can only really
-    # handle simple data.  Which this won't be, unless I split the saving into
-    # 2 seperate operations (which is possible I suppose, so long as I ensure
-    # client side validation is done first)
-    return api.SimpleApi(
-        models.ServerGroup,
-        {
-            'id' : models.ServerGroup.id,
-            'name' : models.ServerGroup.name
-            },
-        models.ServerGroup.id
-        );
+    return api.GroupsApi
