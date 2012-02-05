@@ -12,10 +12,12 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupEd
       if @model.id
         @model.fetch()
         @model.members.fetch()
+      # Maybe replace this append with templated stuff sometime?
       @$el.append(
-        "<dl id='groupEditDl'></dl>
-        <ul id='memberList'></ul>
-        <dl id='groupAddMember'></div>"
+        "<h2>Edit Group</h2>
+        <dl id='groupEditDl'></dl>
+        Members:
+        <ul id='memberList'></ul>"
       )
       @render
 

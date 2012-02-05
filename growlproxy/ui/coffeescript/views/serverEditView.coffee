@@ -1,6 +1,6 @@
 define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverEdit.html" ], ($, _, Backbone, Mustache, Template) ->
   ServerEditView = Backbone.View.extend(
-    tagName: "dl"
+    tagName: "div"
     id: "serverEdit"
     template: Template
     initialize: ->
@@ -9,7 +9,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
       @model.fetch()  if @model.id
 
     render: ->
-      $(@el).html Mustache.render(@template, @model.toJSON())
+      @$el.html Mustache.render(@template, @model.toJSON())
       @delegateEvents "click button": "submit"
 
     onClose: ->

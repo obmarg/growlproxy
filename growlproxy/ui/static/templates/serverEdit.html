@@ -1,7 +1,11 @@
 <!-- TODO: Make a css class for hidden shit -->
-    <!-- TODO: csrf stuff -->
+<!-- TODO: csrf stuff -->
+<h2>Edit Server</h2>
+<dl>
     <dt>Name</dt>
-    <dd><input type='text' name='name' value='{{ name }}' id='serverNameInput'/></dd>
+    <dd>
+        <input type='text' name='name' value='{{ name }}' id='serverNameInput'/>
+    </dd>
     <dt>Remote Host</dt>
     <dd>
     	<input 
@@ -25,4 +29,5 @@
         {{#forwardGrowls}} checked {{/forwardGrowls}}
         id='serverForwardGrowls'
         /></dd>
+</dl>
 <button class='submitServer'>Submit</button>

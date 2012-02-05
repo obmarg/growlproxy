@@ -69,8 +69,12 @@ class SimpleApi(object):
         '''
         rv = {}
         for key, value in params.iteritems():
-            newKey = self.mappingDict[ key ].key
-            rv[ newKey ] = value
+            try:
+                newKey = self.mappingDict[ key ].key
+                rv[ newKey ] = value
+            except KeyError:
+                # Ignore missing keys.
+                pass
         return rv
 
     def Update( self, params, *posargs, **kwargs ):

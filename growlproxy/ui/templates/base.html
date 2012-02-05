@@ -16,9 +16,14 @@
             type='text/css'
             href='{{ url_for( 'static', filename='libs/jquery/css/blitzer/jquery-ui-1.8.16.custom.css' )}}' />
         <link  
-            orel='stylesheet' 
+            rel='stylesheet' 
             type='text/css' 
             href='{{ url_for( 'static', filename='libs/jquery/css/jquery.qtip.min.css') }}' />
+        <link
+            rel='stylesheet'
+            type='text/css'
+            href='{{ url_for( 'static', filename='style.css' ) }}'
+            />
         {% block additionalHeader %}
         {% endblock %}
         <style type='text/css'>

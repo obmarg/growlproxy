@@ -5,3 +5,5 @@ gntp
 *.db
 settings.py
 tags
+.sass-cache/
+style.css
