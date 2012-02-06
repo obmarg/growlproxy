@@ -29,10 +29,9 @@ def TeardownRequest( exception ):
 
 @app.route('/')
 def Index():
-    print api.GetBootstrapJson()
     return render_template( 
             'index.html',
-            bootstrap=api.GetBootstrapJson()
+            bootstrap=api.GetBootstrapJson( g.db )
             )
 
 @app.route('/servers/')
@@ -207,19 +206,20 @@ def CreateRestView(
         A REST API view
         Passes all parameters on to API Object methods
         '''
+        api = apiObject( g.db )
         if request.method=='POST' and create:
-            rv = apiObject.Create( request.json, *posargs, **kwargs )
+            rv = api.Create( request.json, *posargs, **kwargs )
             return jsonify( rv )
         elif request.method == 'PUT' and update:
-            rv = apiObject.Update( request.json, *posargs, **kwargs )
+            rv = api.Update( request.json, *posargs, **kwargs )
             return jsonify( rv )
         elif request.method == 'DELETE' and delete:
-            apiObject.Delete( *posargs, **kwargs )
+            api.Delete( *posargs, **kwargs )
             #TODO: Figure out what to return here
             return "OK"
         elif request.method == 'GET' and read:
         # Must be a get.  Retreive stuff
-            rv = apiObject.Read( *posargs, **kwargs )
+            rv = api.Read( *posargs, **kwargs )
             return jsonify( rv ) 
         abort( 500 )
     # Set up the url rules
@@ -268,7 +268,7 @@ GroupsApi = CreateRestView(
         )
 
 GroupMembersApi = CreateRestView(
-        api.GroupMembershipApi,
+        api.GroupMembersApi,
         'members',
         anonUrl = '/api/groups/<int:groupId>/members',
         idUrl = '/api/groups/<int:groupId>/members/<int:serverId>',

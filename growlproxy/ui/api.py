@@ -1,23 +1,25 @@
-from flask import g
 from growlproxy import models
 import json
 
 class SimpleApi(object):
-    def __init__( self, model, mappingDict, idObj, listKeyName ):
+    '''
+    Simple API base class
+    API classes should derive from this and provide the following details:
+    model - The model to operate on
+    mappingDict - The mapping dictionary: jsonName : modelProperty
+    idObj - The instrumented sql alchemy ID column
+    listKeyName - The key to use for lists that are wrapped in
+                  dictionaries before being returned
+                  Flask.jsonify refuses to parse lists, so this
+                  is required
+    '''
+
+    def __init__( self, db ):
         '''
         Constructor
-        @param: model           The model to operate on
-        @param: mappingDict     Dictionary mapping { jsonName : modelProperty }
-        @param: idObj           sqlalchemy id object
-        @param: listKeyName     The key to use for lists that are wrapped in
-                                dictionaries before being returned
-                                Flask.jsonify refuses to parse lists, so this 
-                                is required
+        @param: db      The database to operate on
         '''
-        self.model = model
-        self.mappingDict = mappingDict
-        self.idObj = idObj
-        self.listKeyName = listKeyName
+        self.db = db
 
     def _FilterQuery(self, query, id=None):
         '''
@@ -37,7 +39,7 @@ class SimpleApi(object):
         @param: posargs The positional arguments (passed on to _FilterQuery)
         @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         '''
-        query = g.db.query(
+        query = self.db.query(
                 *self.mappingDict.itervalues()
                 )
         query = self._FilterQuery( query, *posargs, **kwargs )
@@ -88,7 +90,7 @@ class SimpleApi(object):
         #TODO: Some validation etc. would be nice
         if id is None:
             raise Exception
-        query = self._FilterQuery( g.db.query( self.model ), *posargs, **kwargs )
+        query = self._FilterQuery( self.db.query( self.model ), *posargs, **kwargs )
         query.update(
             self._ConvertParameters( params ),
             False
@@ -101,7 +103,7 @@ class SimpleApi(object):
         @param: params  The details of the item to create
         '''
         obj = self.model( **self._ConvertParameters( params ) )
-        g.db.add( obj )
+        self.db.add( obj )
         return self.Read( id = obj.id )
 
     def Delete( self, *posargs, **kwargs ):
@@ -112,35 +114,50 @@ class SimpleApi(object):
         '''
         pass
 
-ServersApi = SimpleApi(
-    models.Server,
-    {
+class ServersApi( SimpleApi ):
+    '''
+    Handles the Server CRUD API
+    '''
+    model = models.Server
+    mappingDict = {
         'id' : models.Server.id,
         'name' : models.Server.name,
         'remoteHost' : models.Server.remoteHost,
         'receiveGrowls' : models.Server.receiveGrowls,
         'forwardGrowls' : models.Server.forwardGrowls,
         'userRegistered' : models.Server.userRegistered
-        },
-    models.Server.id,
-    'servers'
-    )
+        }
+    idObj = models.Server.id
+    listKeyName = 'servers'
 
 # SimpleApi isn't really that great for Groups, because it can only really
 # handle simple data.  Which this won't be, unless I split the saving into
 # 2 seperate operations (which is possible I suppose, so long as I ensure
 # client side validation is done first)
-GroupsApi = SimpleApi(
-    models.ServerGroup,
-    {
+class GroupsApi(SimpleApi):
+    '''
+    Handles the Group CRUD API
+    '''
+    model = models.ServerGroup
+    mappingDict = {
         'id' : models.ServerGroup.id,
         'name' : models.ServerGroup.name
-        },
-    models.ServerGroup.id,
-    'groups'
-    );
+        }
+    idObj = models.ServerGroup.id
+    listKeyName = 'groups'
 
-class GroupMemberObj( SimpleApi ):
+class GroupMembersApi( SimpleApi ):
+    '''
+    Handles the Group Member CRUD API
+    '''
+    model = models.ServerGroupMembership,
+    mappingDict = {
+        'id' : models.ServerGroupMembership.serverId,
+        'name' : models.Server.name
+        }
+    idObj = None,
+    listKeyName = 'members'
+
     def _FilterQuery(self, query, groupId, serverId=None):
         '''
         Filters a query by 
@@ -158,19 +175,15 @@ class GroupMemberObj( SimpleApi ):
                     )
         return rv.join( "server" )
 
-GroupMembershipApi = GroupMemberObj(
-        models.ServerGroupMembership,
-        {
-            'id' : models.ServerGroupMembership.serverId,
-            'name' : models.Server.name
-            },
-        None,
-        'members'
-        )
-
-def GetBootstrapJson():
+def GetBootstrapJson( db ):
+    '''
+    Gets the JSON required for bootstrapping the web app
+    @param: db  The database to operate on
+    '''
     #TODO: Do I want to check these json blobs for xss injection type stuff?
+    servers = ServersApi( db )
+    groups = GroupsApi( db )
     return {
-        'servers' : json.dumps( ServersApi.GetList() ),
-        'groups' : json.dumps( GroupsApi.GetList() )
+        'servers' : json.dumps( servers.GetList() ),
+        'groups' : json.dumps( groups.GetList() )
         }
