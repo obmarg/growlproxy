@@ -7,3 +7,6 @@ settings.py
 tags
 .sass-cache/
 style.css
+.project
+.pydevproject
+*.bat
