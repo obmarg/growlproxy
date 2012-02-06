@@ -1,13 +1,17 @@
 from growlproxy import models
 import json
 
+#TODO: Need to stop using id as a name.  if id:  will always return true because of 
+#       id builtin function
+
 class SimpleApi(object):
     '''
     Simple API base class
     API classes should derive from this and provide the following details:
     model - The model to operate on
     mappingDict - The mapping dictionary: jsonName : modelProperty
-    idObj - The instrumented sql alchemy ID column
+    idObj - The instrumented sql alchemy ID column (wrapped in a tuple to 
+            avoid wierd errors)
     listKeyName - The key to use for lists that are wrapped in
                   dictionaries before being returned
                   Flask.jsonify refuses to parse lists, so this
@@ -29,7 +33,7 @@ class SimpleApi(object):
         @returns             The filtered query
         '''
         if id:
-            return query.filter( self.idObj == id )
+            return query.filter( self.idObj[0] == id )
         else:
             return query
 
@@ -55,6 +59,8 @@ class SimpleApi(object):
         @return     A list of item(s)
         '''
         if id:
+            # If id is set, then add it to the kwargs dict so it gets passed 
+            # to GetList
             kwargs[ 'id' ] = id
         ls = self.GetList( *posargs, **kwargs )
         if id:
@@ -104,6 +110,9 @@ class SimpleApi(object):
         '''
         obj = self.model( **self._ConvertParameters( params ) )
         self.db.add( obj )
+        self.db.commit()
+        #TODO: This isn't very generic.  Chances are the id isn't always going to be 
+        # called id.  So figure out a fix for this at some point
         return self.Read( id = obj.id )
 
     def Delete( self, *posargs, **kwargs ):
@@ -127,7 +136,7 @@ class ServersApi( SimpleApi ):
         'forwardGrowls' : models.Server.forwardGrowls,
         'userRegistered' : models.Server.userRegistered
         }
-    idObj = models.Server.id
+    idObj = ( models.Server.id, )
     listKeyName = 'servers'
 
 # SimpleApi isn't really that great for Groups, because it can only really
@@ -143,7 +152,7 @@ class GroupsApi(SimpleApi):
         'id' : models.ServerGroup.id,
         'name' : models.ServerGroup.name
         }
-    idObj = models.ServerGroup.id
+    idObj = ( models.ServerGroup.id, )
     listKeyName = 'groups'
 
 class GroupMembersApi( SimpleApi ):
@@ -155,7 +164,7 @@ class GroupMembersApi( SimpleApi ):
         'id' : models.ServerGroupMembership.serverId,
         'name' : models.Server.name
         }
-    idObj = None,
+    idObj = ( None, )
     listKeyName = 'members'
 
     def _FilterQuery(self, query, groupId, serverId=None):

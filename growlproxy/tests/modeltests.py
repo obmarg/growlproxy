@@ -5,8 +5,8 @@ import unittest
 import growlproxy.db
 from growlproxy.models import *
 
-class ModelTests(unittest.TestCase):
-    ''' Base class for model tests '''
+class BaseModelTest(unittest.TestCase):
+    ''' Base class for tests that use the database '''
 
     def setUp(self):
         self.dbFd, self.dbPath = tempfile.mkstemp()
@@ -14,9 +14,13 @@ class ModelTests(unittest.TestCase):
         self.db = growlproxy.db.GetDbSession()
 
     def tearDown(self):
+        self.db.close()
         os.close( self.dbFd )
         os.unlink( self.dbPath )
 
+class ModelTests(BaseModelTest):
+    ''' Model tests '''
+    
     def test_Cascades( self ):
         ''' 
         Tests cascading of updates & deletes
