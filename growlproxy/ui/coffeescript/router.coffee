@@ -1,8 +1,10 @@
-define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "collections/serverList", "collections/groupList" ], ($, _, Backbone, SeverEditView, GroupEditView, servers, groups ) ->
+define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "models/server", "collections/serverList", "collections/groupList" ], ($, _, Backbone, ServerEditView, GroupEditView, Server, servers, groups ) ->
   AppRouter = Backbone.Router.extend(
     routes:
       "servers/:id": "server"
+      "servers/add/" : "newServer"
       "groups/:id": "group"
+      "groups/add/" : "newGroup"
 
     initialize: ->
       @currentView = null
@@ -17,12 +19,22 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @currentView = newView
 
     server: (id) ->
-      view = new SeverEditView( model: servers.get(id) )
+      view = new ServerEditView( model: servers.get(id) )
+      @changeView view
+
+    newServer: ->
+      # TODO: Somehow want to add this server in to the collection
+      #       after submit is clicked
+      view = new ServerEditView( model: new Server )
+      view.addToCollection = servers
       @changeView view
 
     group: (id) ->
       view = new GroupEditView( model: groups.get(id) )
       @changeView view
+
+    newGroup: ->
+      # TODO: Do something
   )
   initialize = ->
     app_router = new AppRouter

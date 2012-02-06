@@ -100,7 +100,9 @@ class SimpleApi(object):
         Creates an item
         @param: params  The details of the item to create
         '''
-        pass
+        obj = self.model( **self._ConvertParameters( params ) )
+        g.db.add( obj )
+        return self.Read( id = obj.id )
 
     def Delete( self, *posargs, **kwargs ):
         '''

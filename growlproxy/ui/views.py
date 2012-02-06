@@ -208,12 +208,11 @@ def CreateRestView(
         Passes all parameters on to API Object methods
         '''
         if request.method=='POST' and create:
-            apiObject.Create( request.json, *posargs, **kwargs )
-            #TODO: Return some JSON?
-            return "OK"
+            rv = apiObject.Create( request.json, *posargs, **kwargs )
+            return jsonify( rv )
         elif request.method == 'PUT' and update:
-            update = apiObject.Update( request.json, *posargs, **kwargs )
-            return jsonify( update )
+            rv = apiObject.Update( request.json, *posargs, **kwargs )
+            return jsonify( rv )
         elif request.method == 'DELETE' and delete:
             apiObject.Delete( *posargs, **kwargs )
             #TODO: Figure out what to return here

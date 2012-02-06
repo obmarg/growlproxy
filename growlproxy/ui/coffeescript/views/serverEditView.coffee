@@ -5,16 +5,25 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
     template: Template
     initialize: ->
       @model.bind "change", @render, this
+      @model.bind "sync", @onSync, this
       @model.bind "destroy", @render, this
-      @model.fetch()  if @model.id
+      if @model.id
+        @model.fetch()
+      @render()
+
+    onClose: ->
+      @model.unbind "change", @render, this
+      @model.unbind "sync", @onSync, this
+      @model.unbind "destroy", @render, this
+
+    onSync: ->
+      if @addToCollection isnt null
+      	@addToCollection.add @model
+      	@addToCollection = null
 
     render: ->
       @$el.html Mustache.render(@template, @model.toJSON())
       @delegateEvents "click button": "submit"
-
-    onClose: ->
-      @model.unbind "change", @render, this
-      @model.unbind "destroy", @render, this
 
     submit: ->
       @model.save

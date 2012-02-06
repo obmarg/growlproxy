@@ -4,6 +4,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverL
     template: Template
     events: {}
     initialize: ->
+      @model.bind "add", @render, this
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
       @render()
@@ -16,6 +17,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverL
       this
 
      onClose: ->
+       @model.unbind "add", @render, this
        @model.unbind "change", @render, this
        @model.unbind "destroy", @render, this
 
