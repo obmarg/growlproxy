@@ -73,7 +73,7 @@ class SimpleApi(object):
         Takes in a parameter dict (generated from json) and converts to 
         dict for passing to sqlalchemy
         @param: params        The json generated input parameters
-        @reutrn:              A dict suitable for passing to sqlalchemy
+        @return:              A dict suitable for passing to sqlalchemy
         '''
         rv = {}
         for key, value in params.iteritems():
@@ -83,6 +83,20 @@ class SimpleApi(object):
             except KeyError:
                 # Ignore missing keys.
                 pass
+        return rv
+
+    def _StripInvalidItems( self, params ):
+        '''
+        Takes in a parameter dict (generated from json) and removes all the
+        items that don't map to database columns
+        @param: params      The json generated input parameters
+        @return:            A dict suitable for returning to the client, 
+                            with all the invalid items removed
+        '''
+        rv = {}
+        for key, value in params.iteritems():
+            if key in self.mappingDict:
+                rv[ key ] = value
         return rv
 
     def Update( self, params, *posargs, **kwargs ):
@@ -101,7 +115,7 @@ class SimpleApi(object):
             self._ConvertParameters( params ),
             False
             )
-        return params
+        return self._StripInvalidItems( params )
 
     def Create( self, params ):
         '''
