@@ -180,7 +180,8 @@ def AddRule():
 
 def CreateRestView( 
         apiObject, name, idUrl=None, anonUrl=None, baseUrl=None,
-        create=True, read=True, update=True, delete=True 
+        create=True, read=True, update=True, delete=True,
+        registerUrls=True 
         ):
     '''
     Creates a REST API view function and registers it with the app
@@ -194,12 +195,11 @@ def CreateRestView(
     @param: create          If true, create operations allowed
     @param: read            If true, read opeartions allowed
     @param: update          If true, update operations allowed
-    @param  delete          If true, delete operations allowed
+    @param: delete          If true, delete operations allowed
+    @param: registerUrls    If set to False, will not register URLs
+                            (mostly for testing)
     @return A view function to handle this REST API 
     '''
-    if baseUrl and baseUrl[-1] == '/':
-        # Strip out any trailing slash
-        baseUrl = baseUrl[:-1]
 
     def RestView( *posargs, **kwargs ):
         '''
@@ -215,44 +215,49 @@ def CreateRestView(
             return jsonify( rv )
         elif request.method == 'DELETE' and delete:
             api.Delete( *posargs, **kwargs )
-            #TODO: Figure out what to return here
+            #TODO: Figure out what to return herE
             return "OK"
         elif request.method == 'GET' and read:
         # Must be a get.  Retreive stuff
             rv = api.Read( *posargs, **kwargs )
             return jsonify( rv ) 
         abort( 500 )
-    # Set up the url rules
-    if idUrl or baseUrl:
-        if not idUrl:
-            idUrl = baseUrl + '/<int:id>'
-        methods = []
-        if read:
-            methods += [ 'GET' ]
-        if update:
-            methods += [ 'PUT' ]
-        if delete:
-            methods += [ 'DELETE' ]
-        app.add_url_rule(
-            idUrl,
-            name,
-            RestView,
-            methods = methods
-            )
-    if anonUrl or baseUrl:
-        if not anonUrl:
-            anonUrl = baseUrl
-        methods = []
-        if read:
-            methods += [ 'GET' ]
-        if create:
-            methods += [ 'POST' ]
-        app.add_url_rule( 
-                anonUrl,
+
+    if registerUrls:
+        # Set up the url rules
+        if baseUrl and baseUrl[-1] == '/':
+            # Strip out any trailing slash
+            baseUrl = baseUrl[:-1]
+        if idUrl or baseUrl:
+            if not idUrl:
+                idUrl = baseUrl + '/<int:id>'
+            methods = []
+            if read:
+                methods += [ 'GET' ]
+            if update:
+                methods += [ 'PUT' ]
+            if delete:
+                methods += [ 'DELETE' ]
+            app.add_url_rule(
+                idUrl,
                 name,
                 RestView,
                 methods = methods
                 )
+        if anonUrl or baseUrl:
+            if not anonUrl:
+                anonUrl = baseUrl
+            methods = []
+            if read:
+                methods += [ 'GET' ]
+            if create:
+                methods += [ 'POST' ]
+            app.add_url_rule( 
+                    anonUrl,
+                    name,
+                    RestView,
+                    methods = methods
+                    )
     return RestView
 
 ServersApi = CreateRestView( 
