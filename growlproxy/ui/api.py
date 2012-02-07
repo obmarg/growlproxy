@@ -68,6 +68,8 @@ class SimpleApi(object):
             kwargs[ 'itemId' ] = itemId
         ls = self.GetList( *posargs, **kwargs )
         if itemId:
+            if len( ls ) == 0:
+                return None
             return ls[0]
         else:
             return { self.listKeyName : ls } 
@@ -137,7 +139,9 @@ class SimpleApi(object):
         @param: posargs The positional arguments (passed on to _FilterQuery)
         @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         '''
-        pass
+        query = self._FilterQuery( self.db.query( self.model ), *posargs, **kwargs )
+        query.delete()
+
 
 class ServersApi( SimpleApi ):
     '''

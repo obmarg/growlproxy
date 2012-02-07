@@ -96,14 +96,40 @@ class ApiTestBase(BaseModelTest):
                 self.assertIn( key, readObj )
                 self.assertEqual( value, readObj[ key ] )
             actualList.append( readObj )
+            # Check that updating without an id excepts
+            self.assertRaises( Exception, self.testApi.Update, copyItem )
 
         # Now, attempt to read all objects again
         readObj = self.testApi.Read()
         self.assertIn( self.api.listKeyName, readObj )
         self.assertEqual( readObj[ self.api.listKeyName ], actualList )
 
-        # TODO: Also test deleting 
-        #       (and then query for individual + list to confirm)
+        # Now delete the objects individually
+        for i, thisId in enumerate( idList ):
+            self.testApi.Delete( itemId = thisId )
+            self.db.commit()
+            self.db.expire_all()
+            # Ensure that we can't read this item specifically
+            readObj = self.testApi.Read( itemId = thisId )
+            self.assertEqual( readObj, None )
+            # Now ensure that we only get the rest of the items when
+            # we ask for everything
+            restItems = self.testApi.Read()
+            self.assertIn( self.api.listKeyName, restItems )
+            self.assertEqual( 
+                    restItems[ self.api.listKeyName ],
+                    actualList[ i+1: ]
+                    )
+            # Finally, check that deleting without an ID excepts
+            # (and doesn't delete anything)
+            self.assertRaises( Exception, self.testApi.Delete )
+            restItems = self.testApi.Read()
+            self.assertIn( self.api.listKeyName, restItems )
+            self.assertEqual(
+                    restItems[ self.api.listKeyName ],
+                    actualList[ i+1: ]
+                    )
+
 
 class ServersApiTest( ApiTestBase ):
     __metaclass__ = DataSetMeta
