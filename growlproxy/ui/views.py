@@ -230,7 +230,7 @@ def CreateRestView(
             baseUrl = baseUrl[:-1]
         if idUrl or baseUrl:
             if not idUrl:
-                idUrl = baseUrl + '/<int:id>'
+                idUrl = baseUrl + '/<int:itemId>'
             methods = []
             if read:
                 methods += [ 'GET' ]

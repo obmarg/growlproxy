@@ -25,16 +25,20 @@ class SimpleApi(object):
         '''
         self.db = db
 
-    def _FilterQuery(self, query, id=None):
+    def _FilterQuery(self, query, requireFilter=True, itemId=None):
         '''
         Filters a query by id
-        @param:    query     The query to filter
-        @param:    id        The id to query for 
-        @returns             The filtered query
+        @param:    query            The query to filter
+        @param:    reqireFilter     If true, an exception will be thrown if no 
+                                    filter criteria provided
+        @param:    itemId           The id to query for 
+        @returns                    The filtered query
         '''
-        if id:
-            return query.filter( self.idObj[0] == id )
+        if itemId:
+            return query.filter( self.idObj[0] == itemId )
         else:
+            if requireFilter:
+                raise Exception( "Filter is required" )
             return query
 
     def GetList(self, *posargs, **kwargs):
@@ -46,24 +50,24 @@ class SimpleApi(object):
         query = self.db.query(
                 *self.mappingDict.itervalues()
                 )
-        query = self._FilterQuery( query, *posargs, **kwargs )
+        query = self._FilterQuery( query, requireFilter=False, *posargs, **kwargs )
         colList = self.mappingDict.keys()
         return [ dict( zip(colList,item) ) for item in query ]
 
-    def Read( self, id=None, *posargs, **kwargs ):
+    def Read( self, itemId=None, *posargs, **kwargs ):
         '''
         Reads a list of items
         @param: posargs The positional arguments (passed on to _FilterQuery)
-        @param: id  The id of the item to return
+        @param: itemId  The id of the item to return
         @param: kwargs  The keyword arguments (passed on to _FilterQuery)
-        @return     A list of item(s)
+        @return         A list of item(s)
         '''
-        if id:
+        if itemId:
             # If id is set, then add it to the kwargs dict so it gets passed 
             # to GetList
-            kwargs[ 'id' ] = id
+            kwargs[ 'itemId' ] = itemId
         ls = self.GetList( *posargs, **kwargs )
-        if id:
+        if itemId:
             return ls[0]
         else:
             return { self.listKeyName : ls } 
@@ -108,8 +112,6 @@ class SimpleApi(object):
         @return         The new server record
         '''
         #TODO: Some validation etc. would be nice
-        if id is None:
-            raise Exception
         query = self._FilterQuery( self.db.query( self.model ), *posargs, **kwargs )
         query.update(
             self._ConvertParameters( params ),
@@ -127,7 +129,7 @@ class SimpleApi(object):
         self.db.commit()
         #TODO: This isn't very generic.  Chances are the id isn't always going to be 
         # called id.  So figure out a fix for this at some point
-        return self.Read( id = obj.id )
+        return self.Read( itemId = obj.id )
 
     def Delete( self, *posargs, **kwargs ):
         '''
@@ -181,12 +183,13 @@ class GroupMembersApi( SimpleApi ):
     idObj = ( None, )
     listKeyName = 'members'
 
-    def _FilterQuery(self, query, groupId, serverId=None):
+    def _FilterQuery(self, query,groupId, requireFilter=True, serverId=None):
         '''
         Filters a query by 
-        @param:    query     The query to filter
-        @param:    groupId   The group id to query for 
-        @param:    serverId  The server id to query for
+        @param: query           The query to filter
+        @param: groupId         The group id to query for 
+        @param: requireFilter   If True, will except if no filter provided
+        @param: serverId        The server id to query for
         @returns             The filtered query
         '''
         rv = query.filter( 
@@ -196,6 +199,8 @@ class GroupMembersApi( SimpleApi ):
             rv = query.filter( 
                     models.ServerGroupMembership.serverId == serverId
                     )
+        elif requireQuery:
+            raise Exception( "Filter is required" )
         return rv.join( "server" )
 
 def GetBootstrapJson( db ):

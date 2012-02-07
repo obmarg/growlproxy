@@ -69,7 +69,7 @@ class ApiTestBase(BaseModelTest):
                 self.assertIn( key, createObj )
                 self.assertEqual( value, createObj[ key ] )
             # Now, make sure that a Read on this object returns OK
-            readObj = self.testApi.Read( id = thisId )
+            readObj = self.testApi.Read( itemId = thisId )
             self.assertEqual( readObj, createObj ) 
             actualList.append( createObj )
         # Now that objects are created, attempt to read all of them
@@ -83,7 +83,7 @@ class ApiTestBase(BaseModelTest):
             copyItem = dict( newItem )
             # add a bogus attribute as above
             copyItem[ 'bogusAttribute' ] = 1234
-            updateObj = self.testApi.Update( copyItem, id=thisId )
+            updateObj = self.testApi.Update( copyItem, itemId=thisId )
             # check no bogus attribute
             self.assertNotIn( 'bogusAttribute', updateObj )
             # confirm that the update worked
@@ -91,7 +91,7 @@ class ApiTestBase(BaseModelTest):
             # Now, make sure that we can read this object individually
             # This item will contain the ID, so make a copy of the 
             # dict with the ID
-            readObj = self.testApi.Read( id = thisId )
+            readObj = self.testApi.Read( itemId = thisId )
             for key, value in newItem.iteritems():
                 self.assertIn( key, readObj )
                 self.assertEqual( value, readObj[ key ] )
