@@ -203,7 +203,7 @@ class GroupMembersApi( SimpleApi ):
             rv = query.filter( 
                     models.ServerGroupMembership.serverId == serverId
                     )
-        elif requireQuery:
+        elif requireFilter:
             raise Exception( "Filter is required" )
         return rv.join( "server" )
 
