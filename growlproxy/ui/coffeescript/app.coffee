@@ -4,6 +4,10 @@ define [ "jQuery", "Underscore", "Backbone", "router", "collections/serverList",
     Router.initialize()
     serverList = new ServerListView(model: servers)
     groupList = new GroupListView(model: groups)
+    $("#sidebar").accordion(
+      autoHeight: false
+      icons: false
+      )
 
   initialize: initialize
 

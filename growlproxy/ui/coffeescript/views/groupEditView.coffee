@@ -14,21 +14,28 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupEd
         @model.members.fetch()
       # Maybe replace this append with templated stuff sometime?
       @$el.append(
-        "<h2>Edit Group</h2>
+        "<h2 class='ui-state-default ui-state-active ui-corner-all'>Edit Group</h2>
         <dl id='groupEditDl'></dl>
         Members:
-        <ul id='memberList'></ul>"
+        <ul id='memberList'></ul>
+        <div class='formButtons'>
+          <button class='submitGroup'>Submit</button>
+        </div>
+        "
       )
       @render
 
     render: ->
       $("#groupEditDl").html Mustache.render(@template, @model.toJSON())
       @delegateEvents "click button": "submit"
+      $(".submitGroup").button()
+      $("input[type=text]").button()
 
     renderMembers: ->
       $("#memberList").html Mustache.render( memberTemplate,
         members : @model.members.toJSON()
       )
+      $("#memberList").sortable()
 
     onClose: ->
       @model.unbind "change", @render, this
@@ -40,6 +47,8 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupEd
     submit: ->
       @model.save name: $("#groupNameInput").val()
       #TODO: Figure out if the members.save is needed
+      #      or done elsewhere.  If it's done elsewhere
+      #      consider stopping that
       @model.members.save()
   )
   GroupEditView

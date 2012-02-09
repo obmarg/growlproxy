@@ -5,13 +5,24 @@ $medium: #C5BC8E;
 $light: #EEE6AB;
 
 
+html {
+    font-size: 13px;
+}
+
 body {
     background-color: $background;
+    text-align: center;
+}
+
+input[type=text] {
+    width:100%;
+    padding: 3px;
 }
 
 #container {
     overflow: hidden;
-    width: 720px;
+    display: inline-block;
+    text-align: left;
     border: {
         width: 1px;
         style: solid;
@@ -21,14 +32,18 @@ body {
         right: auto;
         left: auto;
     }
-    background-color: $medium;
+    padding: 10px;
+    background: $medium;
 }
 
 #sidebar {
     float: left;
-    width: 200px;
+    width: 150px;
     padding: 2px;
-    font-size: 1.4em;
+    h3 {
+        height:2em;
+        padding: 4px;
+    }
 }
 
 @mixin list-base {
@@ -45,7 +60,7 @@ body {
     @include nomp;
     li {
         @include nomp;
-        font-size: 0.9em;
+        font-size: 1em;
         a {
             color: black;
         }
@@ -67,16 +82,43 @@ body {
 #memberList {
     @include list-base;
     @include nomp;
-    ul {
+    li {
         @include nomp;
+        font-size: 1.2em;
+        text-align: center;
+        padding: 2px;
     }
 }
 
 #mainPanel {
     float: left;
-    padding: 2px;
+    margin-left: 10px;
+    margin-right: 10px;
+    width: 250px;
 }
 
 .inline {
     display: inline;
+}
+
+dt {
+    font-size:0.9em;
+}
+
+dd {
+    margin: 0px;
+    margin-top: 2px;
+}
+
+.formButtons {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.buttonset {
+    font-size: 0.7em;
+}
+
+h2 {
+    padding: 5px;
 }
