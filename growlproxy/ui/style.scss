@@ -19,6 +19,11 @@ input[type=text] {
     padding: 3px;
 }
 
+input[role=textbox] {
+    width: 86%;
+    padding: 3px;
+}
+
 #container {
     overflow: hidden;
     display: inline-block;

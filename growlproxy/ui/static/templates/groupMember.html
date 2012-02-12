@@ -1,1 +1,7 @@
-{{#members}}<li class='groupMember ui-widget ui-state-default ui-corner-all' >{{ name }}</li>{{/members}}{{^members}}<li>No Members</li>{{/members}}
+{{#members}}
+    <li id='members_{{ id }}' class='groupMember ui-widget ui-state-default ui-corner-all' >
+        {{ name }}
+    </li>
+{{/members}}
+{{^members}}<li>No Members</li>{{/members}}
+

@@ -167,11 +167,14 @@ class SimpleApi(object):
             )
         return self._StripInvalidItems( params )
 
-    def Create( self, params ):
+    def Create( self, params, **kwargs ):
         '''
         Creates an item
         @param: params  The details of the item to create
+        @parma: kwargs  Catch all extra keyword arguments 
+                        (will be added into the params)
         '''
+        params.update( kwargs )
         obj = self.model( **self._ConvertParameters( params ) )
         self.db.add( obj )
         self.db.commit()
