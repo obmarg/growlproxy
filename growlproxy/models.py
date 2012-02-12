@@ -62,11 +62,14 @@ class Server(Base):
             remoteHost,
             receiveGrowls=False,
             forwardGrowls=False,
-            userRegistered=False
+            userRegistered=False,
+            ourId=None
             ):
         '''
         Constructor.
         '''
+        if ourId:
+            self.id = ourId
         self.name = name
         self.remoteHost = remoteHost
         self.receiveGrowls = receiveGrowls
@@ -89,8 +92,10 @@ class ServerGroup(Base):
     def __str__( self ):
         return self.name
 
-    def __init__( self, name=None ):
+    def __init__( self, name=None, ourId=None ):
         self.name = name
+        if ourId:
+            self.id = ourId
 
     id = Column( Integer, primary_key=True )
     name = Column( String )

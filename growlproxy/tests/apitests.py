@@ -3,6 +3,7 @@ File holds tests for the UI CRUD API classes
 '''
 
 from .modeltests import BaseModelTest
+from growlproxy import models
 from growlproxy.ui.api import *
 
 class DataSetMeta(type):
@@ -26,11 +27,31 @@ class ApiTestBase(BaseModelTest):
     Subclasses should provide the following class variables:
     api - The API class to test
     DataSets - The data sets to run on
+    IdAttrName - The id attribute name (defaults to id)
+    FilterMapping - A dictionary mapping object attributes to their 
+                    corresponding filter dict attribute name
+    FilterChangesOnUpdate - Boolean indicating whether the filter values
+                            will need recalculated after an update.
+                            Default False
     '''
+    IdAttrName = 'id'
+    FilterMapping = { 'id' : 'itemId' }
+    FilterChangesOnUpdate = False
 
     def setUp(self):
         super( ApiTestBase, self ).setUp()
         self.testApi = self.api( self.db )
+
+    def GetFilterDict( self, item ):
+        '''
+        Gets a dictionary to unpack and pass to the Read/Update/Delete
+        API calls for filtering
+        @param: item    The item to filter for
+        '''
+        rv = {}
+        for sourceKey, destKey in self.FilterMapping.iteritems():
+                rv[ destKey ] = item[ sourceKey ]
+        return rv
 
     def DoTest( self, dataSet ):
         '''
@@ -38,18 +59,9 @@ class ApiTestBase(BaseModelTest):
         @param: dataSet     A list of dict's.  Each entry represents an object
                             to add/verify
         '''
-        # Get the name of the id attribute
-        idAttrList = [ 
-                    key for key, value 
-                    in self.api.mappingDict.iteritems()
-                    if value == self.api.idObj[0]
-                    ]
-        self.assertEqual( 1, len( idAttrList ) )
-        idAttrName = idAttrList[ 0 ]
-
         # Add some objects and verify individually
         actualList = []
-        idList = []
+        filterList = []
         for item in dataSet[ 'create' ]:
             copyItem = dict( item )
             # Add a bogus attr to ensure that it's ignored
@@ -58,18 +70,18 @@ class ApiTestBase(BaseModelTest):
             self.assertNotIn( 'bogusAttribute', createObj )
             # Check we got back an ID
             self.assertIn(
-                    idAttrName,
+                    self.IdAttrName,
                     createObj,
                     'No ID returned from create'
                     )
-            thisId = createObj[ idAttrName ]
-            idList.append( thisId )
+            thisFilter = self.GetFilterDict( createObj )
+            filterList.append( thisFilter )
             # Check that all the other parameters were passed correctly
             for key, value in item.iteritems():
                 self.assertIn( key, createObj )
                 self.assertEqual( value, createObj[ key ] )
             # Now, make sure that a Read on this object returns OK
-            readObj = self.testApi.Read( itemId = thisId )
+            readObj = self.testApi.Read( **thisFilter )
             self.assertEqual( readObj, createObj ) 
             actualList.append( createObj )
         # Now that objects are created, attempt to read all of them
@@ -78,26 +90,35 @@ class ApiTestBase(BaseModelTest):
         self.assertEqual( readObj[ self.api.listKeyName ], actualList )
 
         actualList = []
-        for thisId, newItem in zip( idList, dataSet[ 'update' ] ):
+        # Need to update the filter here in some cases, as updating the item
+        # causes updates to the filter.  DAMN YOU lack of primary keys
+        if self.FilterChangesOnUpdate:
+            newFilterList = [ self.GetFilterDict( obj ) for obj in dataSet[ 'update' ] ]
+        else:
+            newFilterList = filterList
+        for thisFilter, newFilter, newItem in zip( 
+                filterList, newFilterList, dataSet[ 'update' ] 
+                ):
             # Update the item
             copyItem = dict( newItem )
-            # add a bogus attribute as above
+            # add a bogus attribute as aboe
             copyItem[ 'bogusAttribute' ] = 1234
-            updateObj = self.testApi.Update( copyItem, itemId=thisId )
+            updateObj = self.testApi.Update( copyItem, **thisFilter )
             # check no bogus attribute
             self.assertNotIn( 'bogusAttribute', updateObj )
             # confirm that the update worked
             self.assertEqual( newItem, updateObj )
             # Now, make sure that we can read this object individually
-            # This item will contain the ID, so make a copy of the 
-            # dict with the ID
-            readObj = self.testApi.Read( itemId = thisId )
+            readObj = self.testApi.Read( **newFilter )
             for key, value in newItem.iteritems():
                 self.assertIn( key, readObj )
                 self.assertEqual( value, readObj[ key ] )
             actualList.append( readObj )
             # Check that updating without an id excepts
             self.assertRaises( Exception, self.testApi.Update, copyItem )
+       
+        # Switch to the new filter list
+        filterList = newFilterList
 
         # Now, attempt to read all objects again
         readObj = self.testApi.Read()
@@ -105,12 +126,12 @@ class ApiTestBase(BaseModelTest):
         self.assertEqual( readObj[ self.api.listKeyName ], actualList )
 
         # Now delete the objects individually
-        for i, thisId in enumerate( idList ):
-            self.testApi.Delete( itemId = thisId )
+        for i, thisFilter in enumerate( filterList ):
+            self.testApi.Delete( **thisFilter )
             self.db.commit()
             self.db.expire_all()
             # Ensure that we can't read this item specifically
-            readObj = self.testApi.Read( itemId = thisId )
+            readObj = self.testApi.Read( **thisFilter )
             self.assertEqual( readObj, None )
             # Now ensure that we only get the rest of the items when
             # we ask for everything
@@ -171,7 +192,7 @@ class GroupsApiTest( ApiTestBase ):
 
     api = GroupsApi
     DataSets = [
-            { 
+            {
                 'create' : [
                     { 'name' : 'Group 1' },
                     { 'name' : 'Group 2' }
@@ -195,4 +216,57 @@ class GroupsApiTest( ApiTestBase ):
             }
         ]
 
+class GroupMembersApiTest( ApiTestBase ):
+    __metaclass__ = DataSetMeta
+
+    api = GroupMembersApi
+    FilterChangesOnUpdate = True
+    FilterMapping = { 'serverId' : 'serverId', 'groupId' : 'groupId' }
+
+    def setUp( self ):
+        '''
+        Sets up some servers and groups (needed for this test to work)
+        '''
+        super( GroupMembersApiTest, self ).setUp()
+        servers = [ 
+                models.Server(
+                    ourId=1,
+                    name='Server 1',
+                    remoteHost='192.157.2.3',
+                    receiveGrowls=True,
+                    forwardGrowls=True
+                    ),
+                models.Server(
+                    ourId=2, 
+                    name='Server 2',
+                    remoteHost='192.165.7.4',
+                    receiveGrowls=True,
+                    forwardGrowls=True
+                    )
+                ]
+        groups = [
+                models.ServerGroup( ourId=1, name='Group 1' ),
+                models.ServerGroup( ourId=2, name='Group 2' )
+                ]
+        self.db.add( servers[ 0 ] )
+        self.db.add( servers[ 1 ] )
+        self.db.add( groups[ 0 ] )
+        self.db.add( groups[ 1 ] )
+        self.db.commit()
+
+    # This test isn't going to be perfect.  Won't verify the returned 
+    # server name for one thing.  Would be good to add a test of this
+    # at some point
+    DataSets = [
+            {
+                'create' : [ 
+                    { 'serverId' : 1, 'groupId' : 1 },
+                    { 'serverId' : 2, 'groupId' : 2 }
+                    ],
+                'update' : [
+                    { 'serverId' : 1, 'groupId' : 2 },
+                    { 'serverId' : 2, 'groupId' : 1 }
+                    ]
+            }
+        ]
 

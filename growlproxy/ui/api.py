@@ -9,14 +9,34 @@ class SimpleApi(object):
     Simple API base class
     API classes should derive from this and provide the following details:
     model - The model to operate on
-    mappingDict - The mapping dictionary: jsonName : modelProperty
+    writeMappings - The write mapping dictionary.  jsonName : modelProperty
+    readMappings - The read mapping dictionary - jsonName : modelProperty
+                   Defaults to the same as writeMappings.
+                   Set to an empty dict for none
+    filterMappings - A mapping dictionary - jsonName : modelProperty
+                     This contains mappings that should be used when creating
+                     and filtering a model, but should not be returned to the
+                     user
+    createToFilterMappings - A mapping dict - jsonCreateName : filterName
+                             Maps attributes of create json to names of filters
+                             Used for querying for a return object after 
+                             creating an item
     idObj - The instrumented sql alchemy ID column (wrapped in a tuple to 
-            avoid wierd errors)
+            avoid descriptor related errors)
+            This item can probably be omitted if using a filterMappings
+            dictionary
     listKeyName - The key to use for lists that are wrapped in
                   dictionaries before being returned
                   Flask.jsonify refuses to parse lists, so this
                   is required
+    joins - A list of table names to join to during filter operations
+            [ [ Join1Table1, Join1Table2 ], [ Join2Table1 ] ]
     '''
+    readMappings = None
+    writeMappings = None
+    filterMappings = None
+    createToFetchMappings = { 'id' : 'itemId' }
+    joins = []
 
     def __init__( self, db ):
         '''
@@ -24,22 +44,36 @@ class SimpleApi(object):
         @param: db      The database to operate on
         '''
         self.db = db
+        if not self.filterMappings:
+            # Set up the default itemId to idObj mapping
+            self.filterMappings = { 'itemId' : self.idObj[0] }
+        if self.readMappings is None:
+            self.readMappings = dict( self.writeMappings )
 
-    def _FilterQuery(self, query, requireFilter=True, itemId=None):
+    def _FilterQuery(self, query, requireFilter=True, doJoins=False, **kwargs):
         '''
         Filters a query by id
         @param:    query            The query to filter
         @param:    reqireFilter     If true, an exception will be thrown if no 
                                     filter criteria provided
-        @param:    itemId           The id to query for 
+        @parama:    doJoins         If True, will join tables as set in class 
+                                    attributes
+        @param:     kwargs          A dictionary containing all the filter criteria
         @returns                    The filtered query
         '''
-        if itemId:
-            return query.filter( self.idObj[0] == itemId )
-        else:
-            if requireFilter:
-                raise Exception( "Filter is required" )
-            return query
+        filtered = False
+        for key, value in kwargs.iteritems():
+            try:
+                query = query.filter( self.filterMappings[ key ] == value )
+                filtered = True
+            except KeyError:
+                pass
+        if requireFilter and not filtered:
+            raise Exception( "Filter is required" )
+        if doJoins:
+            for join in self.joins:
+                query = query.join( *join )
+        return query
 
     def GetList(self, *posargs, **kwargs):
         '''
@@ -48,31 +82,13 @@ class SimpleApi(object):
         @param: kwargs  The keyword arguments (passed on to _FilterQuery)
         '''
         query = self.db.query(
-                *self.mappingDict.itervalues()
+                *self.readMappings.itervalues()
                 )
-        query = self._FilterQuery( query, requireFilter=False, *posargs, **kwargs )
-        colList = self.mappingDict.keys()
+        query = self._FilterQuery( 
+                query, requireFilter=False, doJoins=True,
+                *posargs, **kwargs )
+        colList = self.readMappings.keys()
         return [ dict( zip(colList,item) ) for item in query ]
-
-    def Read( self, itemId=None, *posargs, **kwargs ):
-        '''
-        Reads a list of items
-        @param: posargs The positional arguments (passed on to _FilterQuery)
-        @param: itemId  The id of the item to return
-        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
-        @return         A list of item(s)
-        '''
-        if itemId:
-            # If id is set, then add it to the kwargs dict so it gets passed 
-            # to GetList
-            kwargs[ 'itemId' ] = itemId
-        ls = self.GetList( *posargs, **kwargs )
-        if itemId:
-            if len( ls ) == 0:
-                return None
-            return ls[0]
-        else:
-            return { self.listKeyName : ls } 
 
     def _ConvertParameters(self, params):
         '''
@@ -84,7 +100,7 @@ class SimpleApi(object):
         rv = {}
         for key, value in params.iteritems():
             try:
-                newKey = self.mappingDict[ key ].key
+                newKey = self.writeMappings[ key ].key
                 rv[ newKey ] = value
             except KeyError:
                 # Ignore missing keys.
@@ -94,16 +110,43 @@ class SimpleApi(object):
     def _StripInvalidItems( self, params ):
         '''
         Takes in a parameter dict (generated from json) and removes all the
-        items that don't map to database columns
+        items that don't map to readable columns
         @param: params      The json generated input parameters
         @return:            A dict suitable for returning to the client, 
                             with all the invalid items removed
         '''
         rv = {}
         for key, value in params.iteritems():
-            if key in self.mappingDict:
+            if key in self.readMappings:
                 rv[ key ] = value
         return rv
+
+    def _InputToFilter( self, item ):
+        '''
+        Converts input params into a filter dictionary for unpacking into
+        a read call.
+        @param: item    The item, post creation
+        @return:        A dictionary for unpacking into a filter call
+        '''
+        rv = {}
+        for key, value in self.createToFetchMappings.iteritems():
+                rv[ value ] = item.__getattribute__( key )
+        return rv
+
+    def Read( self, *posargs, **kwargs ):
+        '''
+        Reads a list of items
+        @param: posargs The positional arguments (passed on to _FilterQuery)
+        @param: kwargs  The keyword arguments (passed on to _FilterQuery)
+        @return         A list of item(s)
+        '''
+        ls = self.GetList( *posargs, **kwargs )
+        if [ x for x in kwargs.iterkeys() if x in self.filterMappings ]:
+            if len( ls ) == 0:
+                return None
+            return ls[0]
+        else:
+            return { self.listKeyName : ls } 
 
     def Update( self, params, *posargs, **kwargs ):
         '''
@@ -129,9 +172,7 @@ class SimpleApi(object):
         obj = self.model( **self._ConvertParameters( params ) )
         self.db.add( obj )
         self.db.commit()
-        #TODO: This isn't very generic.  Chances are the id isn't always going to be 
-        # called id.  So figure out a fix for this at some point
-        return self.Read( itemId = obj.id )
+        return self.Read( **self._InputToFilter( obj ) )
 
     def Delete( self, *posargs, **kwargs ):
         '''
@@ -148,7 +189,7 @@ class ServersApi( SimpleApi ):
     Handles the Server CRUD API
     '''
     model = models.Server
-    mappingDict = {
+    writeMappings = {
         'id' : models.Server.id,
         'name' : models.Server.name,
         'remoteHost' : models.Server.remoteHost,
@@ -168,7 +209,7 @@ class GroupsApi(SimpleApi):
     Handles the Group CRUD API
     '''
     model = models.ServerGroup
-    mappingDict = {
+    writeMappings = {
         'id' : models.ServerGroup.id,
         'name' : models.ServerGroup.name
         }
@@ -179,33 +220,25 @@ class GroupMembersApi( SimpleApi ):
     '''
     Handles the Group Member CRUD API
     '''
-    model = models.ServerGroupMembership,
-    mappingDict = {
-        'id' : models.ServerGroupMembership.serverId,
-        'name' : models.Server.name
-        }
-    idObj = ( None, )
+    model = models.ServerGroupMembership
+    readMappings = {
+            'id' : models.ServerGroupMembership.serverId,
+            'name' : models.Server.name,
+            'groupId' : models.ServerGroupMembership.groupId,
+            'serverId' : models.ServerGroupMembership.serverId
+            }
+    writeMappings = {
+            'groupId' : models.ServerGroupMembership.groupId,
+            'serverId' : models.ServerGroupMembership.serverId
+            }
+    filterMappings = {
+            'serverId' : models.ServerGroupMembership.serverId,
+            'groupId' : models.ServerGroupMembership.groupId
+            }
+    createToFetchMappings = { 'serverId' : 'serverId', 'groupId' : 'groupId' }
     listKeyName = 'members'
+    joins = [ [ 'server' ] ]
 
-    def _FilterQuery(self, query,groupId, requireFilter=True, serverId=None):
-        '''
-        Filters a query by 
-        @param: query           The query to filter
-        @param: groupId         The group id to query for 
-        @param: requireFilter   If True, will except if no filter provided
-        @param: serverId        The server id to query for
-        @returns             The filtered query
-        '''
-        rv = query.filter( 
-                    models.ServerGroupMembership.groupId == groupId
-                    )
-        if serverId:
-            rv = query.filter( 
-                    models.ServerGroupMembership.serverId == serverId
-                    )
-        elif requireFilter:
-            raise Exception( "Filter is required" )
-        return rv.join( "server" )
 
 def GetBootstrapJson( db ):
     '''
