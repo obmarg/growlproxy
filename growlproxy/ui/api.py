@@ -141,7 +141,10 @@ class SimpleApi(object):
         @return         A list of item(s)
         '''
         ls = self.GetList( *posargs, **kwargs )
-        if [ x for x in kwargs.iterkeys() if x in self.filterMappings ]:
+        numFiltersUsed = len(
+                [ True for x in kwargs.iterkeys() if x in self.filterMappings ]
+                )
+        if numFiltersUsed == len( self.filterMappings ):
             if len( ls ) == 0:
                 return None
             return ls[0]

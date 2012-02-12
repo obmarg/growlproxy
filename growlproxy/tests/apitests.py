@@ -257,6 +257,8 @@ class GroupMembersApiTest( ApiTestBase ):
     # This test isn't going to be perfect.  Won't verify the returned 
     # server name for one thing.  Would be good to add a test of this
     # at some point
+    # Also would be good to verify that partial filters (i.e. groupId 
+    # filters but no serverId) return a list rather than an object.
     DataSets = [
             {
                 'create' : [ 
