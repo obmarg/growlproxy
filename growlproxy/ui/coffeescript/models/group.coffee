@@ -15,10 +15,11 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
     urlRoot: "api/groups"
     initialize: ->
       @members = new GroupMemberList
-      @members.url = "/api/groups/" + @id + "/members"
+      @members.url = "api/groups/" + @id + "/members"
 
     addMember: (attrs) ->
       member = new GroupMember( attrs )
+      member.urlRoot = @members.url
       @members.add( member )
 
     validate: (attrs) ->

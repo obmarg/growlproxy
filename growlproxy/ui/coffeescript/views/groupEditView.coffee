@@ -4,6 +4,10 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
     id: "groupEdit"
     template: groupEditTemplate
 
+    events:
+      "click button": "submit"
+      "click .deleteButton": "onDeleteMember"
+
     initialize: ->
       events.on "AddGroupMember", @addGroupMember, this
       @model.bind "change", @render, this
@@ -12,6 +16,9 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       @model.members.bind "change", @renderMembers, this
       @model.members.bind "destroy", @renderMembers, this
       @model.members.bind "reset", @renderMembers, this
+
+      @removedMembers = []
+
       if @model.id
         @model.fetch()
         @model.members.fetch()
@@ -41,7 +48,6 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
     render: ->
       $("#groupEditDl").html Mustache.render(@template, @model.toJSON())
-      @delegateEvents "click button": "submit"
       $(".submitGroup").button()
       $("input[type=text]").button()
       $("#addMemberList").append(
@@ -61,10 +67,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
           if selected != "Add Member"
             events.trigger( "AddGroupMember", selected )
         )
-      #$("#addMemberList").bind(
-      #  "selectboxclose",
-      #  -> alert( "BLAH" )
-      #)
+      @delegateEvents
 
     renderMembers: ->
       $("#memberList").html Mustache.render( memberTemplate,
@@ -81,7 +84,25 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
         name: servers.get( serverId ).attributes.name
       )
 
+    onDeleteMember: ( origEvent ) ->
+      deleteString = origEvent.currentTarget.id
+      id = parseInt( deleteString.split( '_' )[ 1 ], 10 )
+      # TODO: Probably want to fix this up a bit.
+      #         Suspect it won't work on items that haven't been submitted
+      #         to server (as they have no id.  just a serverId  or whatever)
+      #         Also would be good to animate the removing of items from list
+      toRemove = @model.members.get( id )
+      @model.members.remove( toRemove )
+      $( origEvent.currentTarget.parentElement ).remove()
+      toRemove.urlRoot = @model.members.url
+      @removedMembers.push toRemove
+      # TODO: If there are no more elements remaining, add "No Members" element
+
     submit: ->
+      # TODO: Would be good to move the burden of deleting members to the
+      #       collection/model rather than here.
+      item.destroy() for item in @removedMembers
+      @removedMembers = []
       @model.save name: $("#groupNameInput").val()
       #TODO: Figure out if the members.save is needed
       #      or done elsewhere.  If it's done elsewhere
