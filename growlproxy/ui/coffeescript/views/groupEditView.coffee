@@ -48,8 +48,6 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
     render: ->
       $("#groupEditDl").html Mustache.render(@template, @model.toJSON())
-      $(".submitGroup").button()
-      $("input[type=text]").button()
       $("#addMemberList").append(
         "<option>Add Member</option>"
       )
@@ -60,22 +58,24 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
           )
         )
       )
-      $("#addMemberList").selectbox(
-        height: 1.6
-        change: -> 
-          selected = $("#addMemberList").val()
-          if selected != "Add Member"
-            events.trigger( "AddGroupMember", selected )
-        )
+      #$("#addMemberList").selectbox(
+      #  height: 1.6
+      #  change: -> 
+      #   selected = $("#addMemberList").val()
+      #   if selected != "Add Member"
+      #     events.trigger( "AddGroupMember", selected )
+      # )
+      # TODO: Re-implement this select box
       @delegateEvents
 
     renderMembers: ->
       $("#memberList").html Mustache.render( memberTemplate,
         members : @model.members.toJSON()
       )
-      $("#memberList").sortable(
-        update: @onMemberListUpdate
-        )
+      #TODO: Re-implement this sortable shit
+      #$("#memberList").sortable(
+      #  update: @onMemberListUpdate
+      #  )
 
     addGroupMember: ( serverId ) ->
       # TODO: Add priority and shit to this

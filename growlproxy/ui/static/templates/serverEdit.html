@@ -1,37 +1,29 @@
 <!-- TODO: Make a css class for hidden shit -->
 <!-- TODO: csrf stuff -->
 <h2 class='ui-widget-header ui-corner-all'>Edit Server</h2>
-<dl>
-    <dt>Name</dt>
-    <dd>
-        <input type='text' name='name' value='{{ name }}' id='serverNameInput'/>
-    </dd>
-    <dt>Remote Host</dt>
-    <dd>
-    	<input 
-    		type='text'
-    		name='remoteHost'
-    		value='{{ remoteHost }}'
-    		id='serverRemoteHostInput'
-    		/>
-    </dd>
-</dl>
-<div class='buttonset'>
-    <input 
-        type='checkbox' 
-        name='receiveGrowls'
-        {{#receiveGrowls}} checked {{/receiveGrowls}}
-        id='serverReceiveGrowls'
-        />
-        <label for='serverReceiveGrowls'>Receive Growls</label>
-    <input
-        type='checkbox'
-        name='forwardGrowls'
-        {{#forwardGrowls}} checked {{/forwardGrowls}}
-        id='serverForwardGrowls'
-        />
-        <label for='serverForwardGrowls'>Forward Growls</label>
+<label>Name</label>
+<input type='text' name='name' value='{{ name }}' id='serverNameInput'/>
+<label>Remote Host</label>
+<input 
+	type='text'
+	name='remoteHost'
+	value='{{ remoteHost }}'
+	id='serverRemoteHostInput'
+	/>
+<div class='btn-group'>
+	<input 
+		type='checkbox' 
+		name='receiveGrowls'
+		{{#receiveGrowls}} checked {{/receiveGrowls}}
+		id='serverReceiveGrowls'
+		/>
+	<label for='serverReceiveGrowls'>Receive Growls</label>
+	<input
+		type='checkbox'
+		name='forwardGrowls'
+		{{#forwardGrowls}} checked {{/forwardGrowls}}
+		id='serverForwardGrowls'
+		/>
+	<label for='serverForwardGrowls'>Forward Growls</label>
 </div>
-<div class='formButtons'>
-    <button class='submitServer'>Submit</button>
-</div>
+<button class='btn'>Submit</button>

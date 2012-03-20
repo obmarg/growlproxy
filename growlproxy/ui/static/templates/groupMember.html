@@ -1,11 +1,11 @@
 {{#members}}
-    <li id='members_{{ id }}' class='groupMember ui-widget ui-state-default ui-corner-all' >
+    <li id='members_{{ id }}' class='' >
         {{ name }}
         <div 
             class='deleteButton'
             id='deleteMember_{{ id }}{{^id}}{{serverId}}{{/id}}'
             >
-            <span class='ui-icon ui-icon-trash'></span>
+            <span class='icon-trash'></span>
         </div>
     </li>
 {{/members}}

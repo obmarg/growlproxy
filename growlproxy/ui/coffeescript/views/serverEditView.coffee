@@ -24,9 +24,9 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
     render: ->
       @$el.html Mustache.render(@template, @model.toJSON())
       @delegateEvents "click button": "submit"
-      $('input[type=text]').button()
       $('button').button()
-      $('.buttonset').buttonset()
+      #$('.buttonset').buttonset()
+      # TODO: re-implement buttonset using bootstrap
 
     submit: ->
       @model.save
