@@ -19,6 +19,8 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @currentView = newView
 
     server: (id) ->
+      @clearSidebar()
+      $( ".sidebarLink[data-serverid='#{id}']" ).addClass( "active" )
       view = new ServerEditView( model: servers.get(id) )
       @changeView view
 
@@ -30,11 +32,16 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @changeView view
 
     group: (id) ->
+      @clearSidebar()
+      $( '.sidebarLink[data-groupid="{#id}"]' ).addClass( "active" )
       view = new GroupEditView( model: groups.get(id) )
       @changeView view
 
     newGroup: ->
       # TODO: Do something
+
+    clearSidebar: ->
+      $( ".sidebarLink.active" ).removeClass( "active" )
   )
   initialize = ->
     app_router = new AppRouter
