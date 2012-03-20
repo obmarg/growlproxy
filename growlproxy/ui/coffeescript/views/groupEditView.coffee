@@ -58,14 +58,11 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
           )
         )
       )
-      #$("#addMemberList").selectbox(
-      #  height: 1.6
-      #  change: -> 
-      #   selected = $("#addMemberList").val()
-      #   if selected != "Add Member"
-      #     events.trigger( "AddGroupMember", selected )
-      # )
-      # TODO: Re-implement this select box
+      $("#addMemberList").change( ->
+        selected = $(this).val()
+        if selected != "Add Member"
+          events.trigger( "AddGroupMember", selected )
+      )
       @delegateEvents
 
     renderMembers: ->
