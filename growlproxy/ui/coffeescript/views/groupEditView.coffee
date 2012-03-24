@@ -5,8 +5,9 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
     template: groupEditTemplate
 
     events:
-      "click button": "submit"
+      "click #submitButton": "submit"
       "click .deleteButton": "onDeleteMember"
+      "click .addMemberLink": "onAddMember"
 
     initialize: ->
       events.on "AddGroupMember", @addGroupMember, this
@@ -22,19 +23,13 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       if @model.id
         @model.fetch()
         @model.members.fetch()
-      # Maybe replace this append with templated stuff sometime?
-      @$el.append(
-        "<h2 class='ui-state-default ui-state-active ui-corner-all'>Edit Group</h2>
-        <dl id='groupEditDl'></dl>
-        Members:
-        <ul id='memberList'></ul>
-        <select id='addMemberList'>
-        </select>
-        <div class='formButtons'>
-          <button class='submitGroup'>Submit</button>
-        </div>
-        "
-      )
+
+      @$el.html Mustache.render(@template, @model.toJSON())
+      #$("#addMemberList").change( ->
+      #  selected = $(this).val()
+      #  if selected != "Add Member"
+      #    events.trigger( "AddGroupMember", selected )
+      #)
       @render
 
     onClose: ->
@@ -47,21 +42,16 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       @model.members.unbind "reset", @renderMembers, this
 
     render: ->
-      $("#groupEditDl").html Mustache.render(@template, @model.toJSON())
-      $("#addMemberList").append(
-        "<option>Add Member</option>"
-      )
+      $("#groupNameInput").attr( 'value', @model.get( 'name' ) )
+      $("#addMemberList").html( "" )
       servers.forEach( ( element ) ->
+        id = element.get( 'id' )
+        name = element.get( 'name' )
         $("#addMemberList").append(
-          $("<option>", value: element.attributes.id ).text(
-            element.attributes.name
+          $("<li>").html(
+            "<a href='#' class='addMemberLink' data-id='#{id}'>#{name}</a>"
           )
         )
-      )
-      $("#addMemberList").change( ->
-        selected = $(this).val()
-        if selected != "Add Member"
-          events.trigger( "AddGroupMember", selected )
       )
       @delegateEvents
 
@@ -80,6 +70,13 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
         serverId: serverId
         name: servers.get( serverId ).attributes.name
       )
+
+    onAddMember: ( origEvent ) ->
+      serverToAdd = $( origEvent.currentTarget ).attr( 'data-id' )
+      @addGroupMember( serverToAdd )
+      #TODO: Remove this server from the dropdown
+      return false
+
 
     onDeleteMember: ( origEvent ) ->
       deleteString = origEvent.currentTarget.id
