@@ -1,7 +1,6 @@
 <!-- TODO: Make a css class for hidden shit -->
     <!-- TODO: csrf stuff -->
-<!-- TODO: csrf stuff -->
-<h2>Edit Group</h2>
+<h2>{{#name}}Edit{{/name}}{{^name}}New{{/name}} Group</h2>
 <label>Name</label>
 <input type='text' name='name' value='{{ name }}' id='groupNameInput' />
 <span class='help-inline'>The name of the group</span>

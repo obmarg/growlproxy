@@ -25,6 +25,7 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @changeView view
 
     newServer: ->
+      @clearSidebar()
       # TODO: Somehow want to add this server in to the collection
       #       after submit is clicked
       view = new ServerEditView( model: new Server )
@@ -38,6 +39,7 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @changeView view
 
     newGroup: ->
+      #@clearSidebar()
       # TODO: Do something
 
     clearSidebar: ->

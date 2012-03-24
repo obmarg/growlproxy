@@ -1,6 +1,6 @@
 <!-- TODO: Make a css class for hidden shit -->
 <!-- TODO: csrf stuff -->
-<h2>Edit Server</h2>
+<h2>{{#name}}Edit{{/name}}{{^name}}New{{/name}} Server</h2>
 <label>Name</label>
 <input type='text' name='name' value='{{ name }}' id='serverNameInput'/>
 <label>Remote Host</label>
