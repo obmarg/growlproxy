@@ -6,7 +6,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
     events:
       "click #submitButton": "submit"
-      "click .deleteButton": "onDeleteMember"
+      "click .deleteMember": "onDeleteMember"
       "click .addMemberLink": "onAddMember"
 
     initialize: ->
@@ -79,8 +79,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
 
     onDeleteMember: ( origEvent ) ->
-      deleteString = origEvent.currentTarget.id
-      id = parseInt( deleteString.split( '_' )[ 1 ], 10 )
+      id = $( origEvent.currentTarget ).parent().attr( 'data-memberid' ) 
       # TODO: Probably want to fix this up a bit.
       #         Suspect it won't work on items that haven't been submitted
       #         to server (as they have no id.  just a serverId  or whatever)
@@ -91,7 +90,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       toRemove.urlRoot = @model.members.url
       @removedMembers.push toRemove
       # TODO: If there are no more elements remaining, add "No Members" element
-
+    
     submit: ->
       # TODO: Would be good to move the burden of deleting members to the
       #       collection/model rather than here.
