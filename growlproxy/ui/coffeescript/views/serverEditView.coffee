@@ -17,22 +17,26 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
       @model.unbind "destroy", @render, this
 
     onSync: ->
-      if @addToCollection isnt null
+      if @addToCollection?
       	@addToCollection.add @model
       	@addToCollection = null
 
     render: ->
       @$el.html Mustache.render(@template, @model.toJSON())
-      @delegateEvents "click button": "submit"
-      $('button').button()
-      #$('.buttonset').buttonset()
-      # TODO: re-implement buttonset using bootstrap
+      if @model.get( 'receiveGrowls' )
+      	$('#receiveGrowls').button('toggle')
+      if @model.get( 'forwardGrowls' )
+      	$('#forwardGrowls').button('toggle')
+      @delegateEvents
+        "click #submitButton": "submit"
+        "click #cancelButton": "render"
 
     submit: ->
       @model.save
         name: $("#serverNameInput").val()
         remoteHost: $("#serverRemoteHostInput").val()
-        receiveGrowls: $("#serverReceiveGrowls").attr("checked") isnt `undefined`
-        forwardGrowls: $("#serverForwardGrowls").attr("checked") isnt `undefined`
+        receiveGrowls: $("#receiveGrowls").hasClass("active")
+        forwardGrowls: $("#forwardGrowls").hasClass("active")
+
   )
   ServerEditView
