@@ -6,6 +6,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
     events:
       "click #submitButton": "submit"
+      "click #cancelButton": "cancel"
       "click .deleteMember": "onDeleteMember"
       "click .addMemberLink": "onAddMember"
 
@@ -105,6 +106,16 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       if @addToCollection?
       	@addToCollection.add @model
       	@addToCollection = null
+
+    cancel: ->
+      if @model.isNew()
+        @model.members.reset( [] )
+        $("#groupNameInput").attr( 'value', '' )
+      else
+        # Need to fetch the actual members from the server, 
+        # since they've probably been changed
+        @model.members.fetch()
+      @render()
 
   )
   GroupEditView
