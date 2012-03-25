@@ -13,6 +13,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       events.on "AddGroupMember", @addGroupMember, this
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
+      @model.bind "sync", @onSync, this
       @model.members.bind "add", @renderMembers, this
       @model.members.bind "change", @renderMembers, this
       @model.members.bind "destroy", @renderMembers, this
@@ -36,6 +37,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       events.off "AddGroupMember", @addGroupMember, this
       @model.unbind "change", @render, this
       @model.unbind "destroy", @render, this
+      @model.unbind "sync", @onSync, this
       @model.members.unbind "add", @renderMembers, this
       @model.members.unbind "change", @renderMembers, this
       @model.members.unbind "destroy", @renderMembers, this
@@ -77,7 +79,6 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       #TODO: Remove this server from the dropdown
       return false
 
-
     onDeleteMember: ( origEvent ) ->
       id = $( origEvent.currentTarget ).parent().attr( 'data-memberid' ) 
       # TODO: Probably want to fix this up a bit.
@@ -96,10 +97,14 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       #       collection/model rather than here.
       item.destroy() for item in @removedMembers
       @removedMembers = []
+      if not @model.isNew()
+        @model.members.save()
       @model.save name: $("#groupNameInput").val()
-      #TODO: Figure out if the members.save is needed
-      #      or done elsewhere.  If it's done elsewhere
-      #      consider stopping that
-      @model.members.save()
+
+    onSync: ->
+      if @addToCollection?
+      	@addToCollection.add @model
+      	@addToCollection = null
+
   )
   GroupEditView

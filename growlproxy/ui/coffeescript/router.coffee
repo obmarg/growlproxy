@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "models/server", "collections/serverList", "collections/groupList" ], ($, _, Backbone, ServerEditView, GroupEditView, Server, servers, groups ) ->
+define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "models/server", "models/group", "collections/serverList", "collections/groupList" ], ($, _, Backbone, ServerEditView, GroupEditView, Server, Group, servers, groups ) ->
   AppRouter = Backbone.Router.extend(
     routes:
       "servers/:id": "server"
@@ -39,8 +39,10 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @changeView view
 
     newGroup: ->
-      #@clearSidebar()
-      # TODO: Do something
+      @clearSidebar()
+      view = new GroupEditView( model: new Group )
+      view.addToCollection = groups
+      @changeView view
 
     clearSidebar: ->
       $( ".sidebarLink.active" ).removeClass( "active" )
