@@ -1,12 +1,20 @@
-define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverEdit.html" ], ($, _, Backbone, Mustache, Template) ->
-  ServerEditView = Backbone.View.extend(
+define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "text!templates/serverEdit.html" ], ($, _, Mustache, BaseEditView, Template) ->
+  ServerEditView = BaseEditView.extend(
     tagName: "div"
     id: "serverEdit"
     template: Template
+
+    events:
+        "click #submitButton": "submit"
+        "click #cancelButton": "render"
+        "change input": "onChange"
+
     initialize: ->
       @model.bind "change", @render, this
       @model.bind "sync", @onSync, this
       @model.bind "destroy", @render, this
+      @model.bind "error", @onError, this
+      @errors = false
       if @model.id
         @model.fetch()
       @render()
@@ -15,6 +23,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
       @model.unbind "change", @render, this
       @model.unbind "sync", @onSync, this
       @model.unbind "destroy", @render, this
+      @model.unbind "error", @onError, this
 
     onSync: ->
       if @addToCollection?
@@ -29,16 +38,18 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
       	$('#receiveGrowls').button('toggle')
       if @model.get( 'forwardGrowls' )
       	$('#forwardGrowls').button('toggle')
-      @delegateEvents
-        "click #submitButton": "submit"
-        "click #cancelButton": "render"
+      @clearErrors()
+      @delegateEvents()
 
     submit: ->
-      @model.save
-        name: $("#serverNameInput").val()
-        remoteHost: $("#serverRemoteHostInput").val()
-        receiveGrowls: $("#receiveGrowls").hasClass("active")
-        forwardGrowls: $("#forwardGrowls").hasClass("active")
+      @model.save @getFields()
 
+    getFields: ->
+      name: $("#serverNameInput").val()
+      remoteHost: $("#serverRemoteHostInput").val()
+      receiveGrowls: $("#receiveGrowls").hasClass("active")
+      forwardGrowls: $("#forwardGrowls").hasClass("active")
+
+        
   )
   ServerEditView

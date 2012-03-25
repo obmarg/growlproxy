@@ -1,5 +1,5 @@
-define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/serverList", "text!templates/groupEdit.html", "text!templates/groupMember.html" ], ($, _, Backbone, Mustache, events, servers, groupEditTemplate, memberTemplate) ->
-  GroupEditView = Backbone.View.extend(
+define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "collections/serverList", "text!templates/groupEdit.html", "text!templates/groupMember.html" ], ($, _, Mustache, BaseEditView, events, servers, groupEditTemplate, memberTemplate) ->
+  GroupEditView = BaseEditView.extend(
     tagName: "div"
     id: "groupEdit"
     template: groupEditTemplate
@@ -9,18 +9,22 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       "click #cancelButton": "cancel"
       "click .deleteMember": "onDeleteMember"
       "click .addMemberLink": "onAddMember"
+      "change input" : "onChange"
 
     initialize: ->
       events.on "AddGroupMember", @addGroupMember, this
       @model.bind "change", @render, this
       @model.bind "destroy", @render, this
       @model.bind "sync", @onSync, this
+      @model.bind "error", @onError, this
       @model.members.bind "add", @renderMembers, this
       @model.members.bind "change", @renderMembers, this
       @model.members.bind "destroy", @renderMembers, this
       @model.members.bind "reset", @renderMembers, this
 
       @removedMembers = []
+
+      @errors = false
 
       if @model.id
         @model.fetch()
@@ -39,6 +43,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       @model.unbind "change", @render, this
       @model.unbind "destroy", @render, this
       @model.unbind "sync", @onSync, this
+      @model.unbind "error", @onError, this
       @model.members.unbind "add", @renderMembers, this
       @model.members.unbind "change", @renderMembers, this
       @model.members.unbind "destroy", @renderMembers, this
@@ -56,7 +61,7 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
           )
         )
       )
-      @delegateEvents
+      @clearErrors()
 
     renderMembers: ->
       $("#memberList").html Mustache.render( memberTemplate,
@@ -100,7 +105,11 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
       @removedMembers = []
       if not @model.isNew()
         @model.members.save()
-      @model.save name: $("#groupNameInput").val()
+      @model.save @getFields()
+
+    getFields: ->
+      # Returns a hash of the current fields (for validation or saving purposes)
+      return name: $("#groupNameInput").val()
 
     onSync: ->
       if @addToCollection?

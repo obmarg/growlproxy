@@ -1,2 +1,2 @@
-define( [ "jQuery", "Underscore", "Backbone" ] ) ($, _, Backbone) ->
+define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
   {}

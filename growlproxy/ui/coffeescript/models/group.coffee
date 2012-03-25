@@ -33,5 +33,8 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
       @members.add( member )
 
     validate: (attrs) ->
+      if attrs[ 'name' ]?.length < 1
+      	return [ [ 'name', 'Name must not be empty' ] ]
+      return
   )
   Group

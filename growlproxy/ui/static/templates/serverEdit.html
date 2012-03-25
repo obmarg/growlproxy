@@ -1,8 +1,12 @@
 <!-- TODO: Make a css class for hidden shit -->
 <!-- TODO: csrf stuff -->
 <h2>{{#name}}Edit{{/name}}{{^name}}New{{/name}} Server</h2>
+<div class='control-group' data-field='name'>
 <label>Name</label>
 <input type='text' name='name' value='{{ name }}' id='serverNameInput'/>
+<span class='help-inline' data-text=''></span>
+</div>
+<div class='control-group' data-field='remoteHost'>
 <label>Remote Host</label>
 <input 
 	type='text'
@@ -10,6 +14,8 @@
 	value='{{ remoteHost }}'
 	id='serverRemoteHostInput'
 	/>
+<span class='help-inline' data-text=''></span>
+</div>
 	<div class='btn-group' data-toggle='buttons-checkbox'>
 		<button 
 			id='receiveGrowls' 
