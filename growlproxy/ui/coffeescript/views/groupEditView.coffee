@@ -104,8 +104,10 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "events", "collections/
 
     onSync: ->
       if @addToCollection?
-      	@addToCollection.add @model
-      	@addToCollection = null
+        @addToCollection.add @model
+        @addToCollection = null
+        # Trigger a page change to the newly created group
+        window.location.hash = '/groups/' + @model.id
 
     cancel: ->
       if @model.isNew()

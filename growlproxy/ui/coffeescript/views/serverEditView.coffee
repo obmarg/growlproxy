@@ -18,8 +18,10 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/serverE
 
     onSync: ->
       if @addToCollection?
-      	@addToCollection.add @model
-      	@addToCollection = null
+        @addToCollection.add @model
+        @addToCollection = null
+        # Trigger a page change to the newly created server
+        window.location.hash = '/servers/' + @model.id
 
     render: ->
       @$el.html Mustache.render(@template, @model.toJSON())

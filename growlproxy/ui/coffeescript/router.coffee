@@ -34,7 +34,7 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
 
     group: (id) ->
       @clearSidebar()
-      $( '.sidebarLink[data-groupid="{#id}"]' ).addClass( "active" )
+      $( ".sidebarLink[data-groupid='#{id}']" ).addClass( "active" )
       view = new GroupEditView( model: groups.get(id) )
       @changeView view
 
