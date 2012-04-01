@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Backbone", "router", "views/listView", "collections/serverList", "collections/groupList" ], ( $, _, Backbone, Router, ListView, servers, groups ) ->
+define [ "jQuery", "Underscore", "Backbone", "router", "views/listView", "collections/serverList", "collections/groupList", "collections/ruleList" ], ( $, _, Backbone, Router, ListView, servers, groups, rules ) ->
   
   initialize = ->
     serverList = new ListView(
@@ -16,6 +16,14 @@ define [ "jQuery", "Underscore", "Backbone", "router", "views/listView", "collec
       itemType: "Group"
       idType: "groupid"
       url: "/groups"
+    )
+    ruleList = new ListView(
+      el: $( '#ruleList' )
+      model: rules
+      itemsType: "Rules"
+      itemType: "Rule"
+      idType: "ruleid"
+      url: "/rules"
     )
     Router.initialize()
 

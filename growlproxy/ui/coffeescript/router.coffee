@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "models/server", "models/group", "collections/serverList", "collections/groupList", "events" ], ($, _, Backbone, ServerEditView, GroupEditView, Server, Group, servers, groups, events ) ->
+define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/groupEditView", "views/ruleEditView", "models/server", "models/group", "models/rule", "collections/serverList", "collections/groupList", "collections/ruleList", "events" ], ($, _, Backbone, ServerEditView, GroupEditView, RuleEditView, Server, Group, Rule, servers, groups, rules, events ) ->
   AppRouter = Backbone.Router.extend(
     routes:
       "servers/:id": "server"
@@ -27,6 +27,14 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
 
     newGroup: ->
       @doNewView( groups, -> new GroupEditView( model: new Group ) )
+
+    rule: (id) ->
+      @doEditView( id, rules, 'data-ruleid', ( m ) ->
+        new RuleEditView( model: m )
+      )
+
+    newRule: ->
+      @doNewView( rules, -> new RuleEditView( model: new Rule ) )
 
     doEditView: ( id, collection, dataAttr, viewFunc ) ->
       # Creates an edit view

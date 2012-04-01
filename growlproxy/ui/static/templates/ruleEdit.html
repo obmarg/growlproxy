@@ -1,0 +1,37 @@
+<!-- TODO csrf stuff -->
+<h2>{{#name}}Edit{{/name}}{{^name}}New{{/name}} Forward Rule</h2>
+<div class='control-group' data-field='name'>
+	<label>Name</label>
+	<input type='text' name='name' value='{{name}}' id='ruleNameInput'/>
+	<span class='help-inline' data-text='The name of the filter'></span>
+</div>
+<div class='control-group' data-field='fromServerGroup'>
+	<label>From Group</label>
+	<select id='fromGroupSelect'>
+		<!-- Add options -->
+	</select>
+	<span class='help-inline' data-text='Messages from this group will be handled by this rule'></span>
+</div>
+<div class='control-group' data-field='toServerGroup'>
+	<label>To Group</label>
+	<select id='toGroupSelect'>
+		<!-- Add options -->
+	</select>
+	<span class='help-inline' data-text='Messages will be forwarded to this group'></span>
+</div>
+<div class='btn-group' data-toggle='buttons-checkbox' >
+	<button id='sendToAll' class='btn'>Send To All Members</button>
+	<button id='storeIfOffline' class='btn'>Store If All Offline</button>
+</div>
+<div>&nbsp;</div>
+<label>Filters:</label>
+<div id='ruleFilters'>
+</div>
+<div>&nbsp;</div>
+<button type='submit' id='submitButton' class='btn btn-primary'>Save changes</button>
+{{#name}}
+<button id='deleteButton' class='btn btn-danger'>
+	<i class='icon-trash icon-white'></i> Delete
+</button>
+{{/name}}
+<button id='cancelButton' class='btn'>Cancel</button>
