@@ -10,7 +10,7 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
 
     initialize: ->
       @currentView = null
-      events.on( 'closeView', @closeView, @ )
+      events.on( 'closeView', @onCloseEvent, @ )
 
     server: (id) ->
       @doEditView( id, servers, 'data-serverid', ( m ) -> 
@@ -75,12 +75,15 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
     clearSidebar: ->
       $( ".sidebarLink.active" ).removeClass( "active" )
 
+    onCloseEvent: ->
+      @closeView()
+      @navigate( '/' )
+    
     closeView: ->
       @clearSidebar()
       if @currentView isnt null
         @currentView.onClose()
         @currentView = null
-      @navigate( '/' )
   )
   initialize = ->
     app_router = new AppRouter
