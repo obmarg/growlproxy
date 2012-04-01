@@ -7,6 +7,7 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
     events:
       "click #submitButton": "submit"
       "click #cancelButton": "cancel"
+      "click #deleteButton": "delete"
       "click .deleteMember": "onDeleteMember"
       "click .addMemberLink": "onAddMember"
       "change input" : "onChange"
@@ -127,6 +128,10 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
         # since they've probably been changed
         @model.members.fetch()
       @render()
+
+    delete: ->
+      @model.destroy()
+      events.trigger( 'closeView' )
 
   )
   GroupEditView

@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "text!templates/serverEdit.html" ], ($, _, Mustache, BaseEditView, Template) ->
+define [ "jQuery", "Underscore", "Mustache", "events", "views/baseEditView", "text!templates/serverEdit.html" ], ($, _, Mustache, eventRouter, BaseEditView, Template) ->
   ServerEditView = BaseEditView.extend(
     tagName: "div"
     id: "serverEdit"
@@ -7,12 +7,12 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "text!templat
     events:
         "click #submitButton": "submit"
         "click #cancelButton": "render"
+        "click #deleteButton": "delete"
         "change input": "onChange"
 
     initialize: ->
       @model.bind "change", @render, this
       @model.bind "sync", @onSync, this
-      @model.bind "destroy", @render, this
       @model.bind "error", @onError, this
       @errors = false
       if @model.id
@@ -22,7 +22,6 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "text!templat
     onClose: ->
       @model.unbind "change", @render, this
       @model.unbind "sync", @onSync, this
-      @model.unbind "destroy", @render, this
       @model.unbind "error", @onError, this
 
     onSync: ->
@@ -50,6 +49,10 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "text!templat
       receiveGrowls: $("#receiveGrowls").hasClass("active")
       forwardGrowls: $("#forwardGrowls").hasClass("active")
 
+    delete: ->
+      # Does a delete 
+      @model.destroy()
+      eventRouter.trigger( 'closeView' )
         
   )
   ServerEditView

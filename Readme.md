@@ -29,6 +29,8 @@ Then, the latest version of growlproxy can be obtained using
 git clone git://github.com/obmarg/growlproxy.git
 ```
 
+TODO: Write info on coffeescript compile & database creation
+
 At present, the `growlproxyrun.py` and `growlproxyui.py` files should be used to start the proxy itself and the user interface respectively.
 
 In the future, a unified python script to run both of these will be provided as well as a proper setup.py, but for now this is the recommended method.
