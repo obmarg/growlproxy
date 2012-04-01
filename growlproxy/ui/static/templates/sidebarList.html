@@ -1,0 +1,13 @@
+<li class='nav-header'>
+  {{ itemsType }}
+</li>
+<li>
+	<a href='#{{ url }}/add/'><i class='icon-plus-sign'></i> Add {{ itemType }}</a>
+</li>
+{{#items}}
+<li class='sidebarLink' data-{{ idType }}='{{ id }}'>
+	<a href='#{{ url }}/{{id}}'>{{name}}</a>
+</li>
+{{/items}}
+<li class='.divider'>
+</li>

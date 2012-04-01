@@ -1,8 +1,5 @@
-define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupList.html" ], ($, _, Backbone, Mustache, Template) ->
-  GroupListView = Backbone.View.extend(
-    el: $("#groupList")
-    template: Template
-    events: {}
+define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/sidebarList.html" ], ($, _, Backbone, Mustache, Template) ->
+  ListView = Backbone.View.extend(
     initialize: ->
       @model.bind "add", @render, this
       @model.bind "remove", @render, this
@@ -13,8 +10,12 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupLi
     render: ->
       js = @model.toJSON()
       el = $(@el)
-      el.html Mustache.render(@template,
-        groups: js
+      el.html Mustache.render(Template,
+        items: js
+        itemsType: @options.itemsType
+        itemType: @options.itemType
+        idType: @options.idType
+        url: @options.url
       )
       this
 
@@ -25,4 +26,4 @@ define [ "jQuery", "Underscore", "Backbone", "Mustache", "text!templates/groupLi
        @model.unbind "destroy", @render, this
 
   )
-  GroupListView
+  ListView
