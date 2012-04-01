@@ -6,7 +6,7 @@ define [ "jQuery", "Underscore", "Mustache", "events", "views/baseEditView", "te
 
     events:
         "click #submitButton": "submit"
-        "click #cancelButton": "render"
+        "click #cancelButton": "close"
         "click #deleteButton": "delete"
         "change input": "onChange"
 
@@ -20,16 +20,10 @@ define [ "jQuery", "Underscore", "Mustache", "events", "views/baseEditView", "te
       @render()
 
     onClose: ->
+      @remove()
       @model.unbind "change", @render, this
       @model.unbind "sync", @onSync, this
       @model.unbind "error", @onError, this
-
-    onSync: ->
-      if @addToCollection?
-        @addToCollection.add @model
-        @addToCollection = null
-        # Trigger a page change to the newly created server
-        window.location.hash = '/servers/' + @model.id
 
     render: ->
       @$el.html Mustache.render(@template, @model.toJSON())
@@ -52,7 +46,7 @@ define [ "jQuery", "Underscore", "Mustache", "events", "views/baseEditView", "te
     delete: ->
       # Does a delete 
       @model.destroy()
-      eventRouter.trigger( 'closeView' )
+      @close()
         
   )
   ServerEditView

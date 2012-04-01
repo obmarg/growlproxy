@@ -32,11 +32,6 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
         @model.members.fetch()
 
       @$el.html Mustache.render(@template, @model.toJSON())
-      #$("#addMemberList").change( ->
-      #  selected = $(this).val()
-      #  if selected != "Add Member"
-      #    events.trigger( "AddGroupMember", selected )
-      #)
       @render
 
     onClose: ->
@@ -49,6 +44,7 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
       @model.members.unbind "change", @renderMembers, this
       @model.members.unbind "destroy", @renderMembers, this
       @model.members.unbind "reset", @renderMembers, this
+      @remove()
 
     render: ->
       $("#groupNameInput").attr( 'value', @model.get( 'name' ) )
@@ -68,10 +64,6 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
       $("#memberList").html Mustache.render( memberTemplate,
         members : @model.members.toJSON()
       )
-      #TODO: Re-implement this sortable shit
-      #$("#memberList").sortable(
-      #  update: @onMemberListUpdate
-      #  )
 
     addGroupMember: ( serverId ) ->
       # TODO: Add priority and shit to this
@@ -97,37 +89,27 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
       $( origEvent.currentTarget.parentElement ).remove()
       toRemove.urlRoot = @model.members.url
       @removedMembers.push toRemove
-      # TODO: If there are no more elements remaining, add "No Members" element
     
     submit: ->
       # TODO: Would be good to move the burden of deleting members to the
       #       collection/model rather than here.
       item.destroy() for item in @removedMembers
       @removedMembers = []
+      @model.save @getFields()
       if not @model.isNew()
         @model.members.save()
-      @model.save @getFields()
 
     getFields: ->
-      # Returns a hash of the current fields (for validation or saving purposes)
+      # Returns a hash of the current fields
+      # (for validation or saving purposes)
       return name: $("#groupNameInput").val()
 
-    onSync: ->
-      if @addToCollection?
-        @addToCollection.add @model
-        @addToCollection = null
-        # Trigger a page change to the newly created group
-        window.location.hash = '/groups/' + @model.id
-
     cancel: ->
-      if @model.isNew()
-        @model.members.reset( [] )
-        $("#groupNameInput").attr( 'value', '' )
-      else
+      if not @model.isNew()
         # Need to fetch the actual members from the server, 
         # since they've probably been changed
         @model.members.fetch()
-      @render()
+      @close()
 
     delete: ->
       @model.destroy()

@@ -27,8 +27,7 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
       @changeView view
 
     newServer: ->
-      # TODO: Somehow want to add this server in to the collection
-      #       after submit is clicked
+      @clearSidebar()
       view = new ServerEditView( model: new Server )
       view.addToCollection = servers
       @changeView view
@@ -54,8 +53,9 @@ define [ "jQuery", "Underscore", "Backbone", "views/serverEditView", "views/grou
     closeView: ->
       @clearSidebar()
       if @currentView isnt null
-        @currentView.close()
+        @currentView.onClose()
         @currentView = null
+      @navigate( '/' )
   )
   initialize = ->
     app_router = new AppRouter

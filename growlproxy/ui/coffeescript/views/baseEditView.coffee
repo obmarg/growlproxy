@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
+define [ "jQuery", "Underscore", "Backbone", 'events' ], ($, _, Backbone, eventRouter ) ->
   # BaseEditView is a base class for edit views
   # Provides error functionality
   # Relies on subclasses to set up certain things:
@@ -40,6 +40,17 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
       	@onError( @model, res )
       else if @errors
       	@clearErrors()
+    
+    onSync: ->
+      # Handler for synchronisation.
+      # Adds to collection if needed, then closes
+      if @addToCollection?
+        @addToCollection.add @model
+        @addToCollection = null
+      @close()
+
+    close: ->
+      eventRouter.trigger( 'closeView' )
   )
 
   return BaseEditView
