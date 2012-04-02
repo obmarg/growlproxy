@@ -80,6 +80,8 @@ def CreateRestView(
         elif request.method == 'GET' and read:
         # Must be a get.  Retreive stuff
             rv = api.Read( *posargs, **kwargs )
+            if rv is None:
+                abort( 404 )
             return jsonify( rv ) 
         abort( 500 )
 
@@ -137,4 +139,17 @@ GroupMembersApi = CreateRestView(
         'members',
         anonUrl = '/api/groups/<int:groupId>/members',
         idUrl = '/api/groups/<int:groupId>/members/<int:serverId>',
+        )
+
+RulesApi = CreateRestView(
+        api.RulesApi,
+        'rules',
+        baseUrl = '/api/rules'
+        )
+
+RuleFiltersApi = CreateRestView(
+        api.RuleFiltersApi,
+        'filters',
+        anonUrl = '/api/rules/<int:ruleId>/filters',
+        idUrl = '/api/rules/<int:ruleId>/filters/<int:id>'
         )

@@ -22,7 +22,7 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
 
     newSync: ->
       # This function should only be called after the first save of the model
-      @filters.url = "api/groups/" + @id + "/filters"
+      @filters.url = "api/rules/" + @id + "/filters"
       @unbind "sync", @newSync, this
       @filters.save()
 

@@ -10,17 +10,26 @@ class SimpleApi(object):
     API classes should derive from this and provide the following details:
     model - The model to operate on
     writeMappings - The write mapping dictionary.  jsonName : modelProperty
+                    This maps incoming json attributes to their counterparts
+                    on the model
     readMappings - The read mapping dictionary - jsonName : modelProperty
                    Defaults to the same as writeMappings.
+                   The values of this dict are queried for in read operations,
+                   and then returned in json with the keys from this dict
                    Set to an empty dict for none
     filterMappings - A mapping dictionary - jsonName : modelProperty
-                     This contains mappings that should be used when creating
-                     and filtering a model, but should not be returned to the
-                     user
-    createToFilterMappings - A mapping dict - jsonCreateName : filterName
-                             Maps attributes of create json to names of filters
-                             Used for querying for a return object after 
-                             creating an item
+                     This maps incoming json attributes that should be used
+                     for filtering (during update & read operations) to their
+                     appropriate database columns
+    createToFetchMappings - A mapping dict - modelAttributeName : filterName
+                             Used to create a filter dictionary for a newly
+                             created model.  Maps the name of attributes
+                             on the model to the name of the filter.
+                             Used for getting an object to return when 
+                             creating an item.
+                             It's probably safe to omit this if the table
+                             has a primary key column of id that maps to the
+                             filter itemId.
     idObj - The instrumented sql alchemy ID column (wrapped in a tuple to 
             avoid descriptor related errors)
             This item can probably be omitted if using a filterMappings
@@ -123,8 +132,8 @@ class SimpleApi(object):
 
     def _InputToFilter( self, item ):
         '''
-        Converts input params into a filter dictionary for unpacking into
-        a read call.
+        Uses `createToFetchMappings` to create a filter dictionary that 
+        will return `item` when passed in to a read call.
         @param: item    The item, post creation
         @return:        A dictionary for unpacking into a filter call
         '''
@@ -244,6 +253,45 @@ class GroupMembersApi( SimpleApi ):
     createToFetchMappings = { 'serverId' : 'serverId', 'groupId' : 'groupId' }
     listKeyName = 'members'
     joins = [ [ 'server' ] ]
+
+
+class RulesApi(SimpleApi):
+    '''
+    Handles the Rules CRUD API
+    '''
+    model = models.ForwardRule
+    writeMappings = {
+                'id' : models.ForwardRule.id,
+                'name' : models.ForwardRule.name,
+                'fromServerGroupId' : models.ForwardRule.fromServerGroupId,
+                'toServerGroupId' : models.ForwardRule.toServerGroupId,
+                'sendToAll' : models.ForwardRule.sendToAll,
+                'storeIfOffline' : models.ForwardRule.storeIfOffline,
+            }
+    idObj = ( models.ForwardRule.id, )
+    listKeyName = 'rules'
+
+
+class RuleFiltersApi(SimpleApi):
+    '''
+    Handles the rule filters API
+    '''
+    model = models.RuleFilter
+    writeMappings = {
+                'id' : models.RuleFilter.id,
+                'ruleId' : models.RuleFilter.ruleId,
+                'applicationName' : models.RuleFilter.applicationName,
+                'growlTitle' : models.RuleFilter.growlTitle,
+                'growlContentsRegex' : models.RuleFilter.growlContentsRegex,
+            }
+    filterMappings = {
+                'id' : models.RuleFilter.id,
+                'ruleId' : models.RuleFilter.ruleId
+            }
+    createToFetchMappings = {
+                'id' : 'id'
+            }
+    listKeyName = 'filters'
 
 
 def GetBootstrapJson( db ):

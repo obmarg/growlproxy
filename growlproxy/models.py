@@ -226,7 +226,7 @@ class RuleFilter(Base):
                 ) )
     applicationName = Column( String )
     growlTitle = Column( String )
-    growContentsRegex = Column( String ) # Regular expression of growl contents
+    growlContentsRegex = Column( String ) # Regular expression of growl contents
 
     #TODO: Define a constructor for the above, with default "" for all 
     #      filter criteria
