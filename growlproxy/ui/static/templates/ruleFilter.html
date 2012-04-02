@@ -1,11 +1,21 @@
-<div class='row-fluid'>
-	<div class='span4'>
-		<input type='text' data-field='applicationName' data-filterid='{{id}}'>{{applicationName}}</input>
-	</div>
-	<div class='span4'>
-		<input type='text' data-field='growlTitle' data-filterid='{{id}}'>{{growlTitle}}</input>
-	</div>
-	<div class='span4'>
-		<input type='text' data-field='growlContentsRegex' data-filterid='{{id}}'>{{growlContentsRegex}}</input>
+{{#filter}}
+<div class='well ruleFilter'>
+	{{#id}}
+	<a class='close deleteFilter' data-filterid='{{id}}' href=''><i class='icon-trash'></i></a>
+	{{/id}}
+	<div class='row-fluid'>
+		<div class='span3'>
+			<label>Application Name</label>
+			<input class='span11' type='text' data-field='applicationName' data-filterid='{{id}}' placeholder='App name to match'>{{applicationName}}</input>
+		</div>
+		<div class='span3'>
+			<label>Growl Title</label>
+			<input class='span11' type='text' data-field='growlTitle' data-filterid='{{id}}' placeholder='Title to match'>{{growlTitle}}</input>
+		</div>
+		<div class='span5'>
+			<label>Growl Contents</label>
+			<input class='span11' type='text' data-field='growlContentsRegex' data-filterid='{{id}}' placeholder='Contents to match'>{{growlContentsRegex}}</input>
+		</div>
 	</div>
 </div>
+{{/filter}}

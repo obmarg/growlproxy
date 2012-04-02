@@ -1,4 +1,4 @@
-define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "collections/serverList", "text!templates/ruleEdit.html", "text!templates/ruleFilter.html" ], ($, _, Mustache, BaseEditView, events, servers, ruleEditTemplate, filterTemplate) ->
+define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "collections/groupList", "text!templates/ruleEdit.html", "text!templates/ruleFilter.html" ], ($, _, Mustache, BaseEditView, events, groups, ruleEditTemplate, filterTemplate) ->
   RuleEditView = BaseEditView.extend(
     tagName: "div"
     id: "ruleEdit"
@@ -10,7 +10,8 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
       "click #deleteButton": "delete"
       #"click .deleteMember": "onDeleteMember"
       #"click .addMemberLink": "onAddMember"
-      "change input" : "onChange"
+      "change input#ruleNameInput" : "onChange"
+      "change #ruleFilters input" : "onFilterChange"
 
     initialize: ->
       #events.on "AddGroupMember", @addGroupMember, this
@@ -32,6 +33,24 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
         @model.filters.fetch()
 
       @$el.html Mustache.render(@template, @model.toJSON())
+      fromGs = "<option value=''>Select Group...</option>"
+      toGs = "<option value=''>Select Group...</option>"
+      groups.forEach( ( group ) -> 
+        id = group.id
+        name = group.get( 'name' )
+        fromGs += "<option value='#{id}'>#{name}</option>"
+        toGs += "<option value='#{id}'>#{name}</option>"
+      )
+      toGroupSelect = @$el.find( '#toGroupSelect' )
+      fromGroupSelect = @$el.find( '#fromGroupSelect' )
+      toGroupSelect.html( toGs )
+      fromGroupSelect.html( fromGs )
+      if not @model.isNew()
+        # If model isn't new, then select the correct groups
+        toId = @model.get( 'toServerGroupId' )
+        toGroupSelect.val( toId )
+        fromId = @model.get( 'fromServerGroupId' )
+        fromGroupSelect.val( fromId )
       @render
 
     onClose: ->
@@ -49,11 +68,38 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
     render: ->
       $("#ruleNameInput").attr( 'value', @model.get( 'name' ) )
       @clearErrors()
+      @renderFilters()
 
     renderFilters: ->
-      #$("#memberList").html Mustache.render( memberTemplate,
-      #  members : @model.members.toJSON()
-      #)
+      output = ""
+      @model.filters.forEach( ( item ) ->
+        output += Mustache.render( filterTemplate,
+          filter : item.toJSON() 
+        )
+      )
+      # TODO: The next filter call is going to need some sort of
+      # "This is new" identifier
+      output += Mustache.render( filterTemplate,
+        filter : {}
+      )
+      $("#ruleFilters").html output
+
+    onFilterChange: ( origEvent ) ->
+      target = $( origEvent.currentTarget )
+      filterid = target.attr( 'data-filterid' )
+      if filterid == "" and target.val() != ""
+        # New filter
+        containerDiv = target.parents( ".ruleFilter" )
+        containerDiv.prepend(
+          "<a class='close deleteFilter' data-filterid='' href=''>
+          <i class='icon-trash'></i>
+          </a>"
+        )
+        containerDiv.find( 'input' ).attr( 'data-filterid', 'new' )
+        $("#ruleFilters").append( Mustache.render( filterTemplate,
+          filter: {}
+        ) )
+        # Run validation on this one
 
     submit: ->
       @model.save @getFields()
@@ -63,7 +109,11 @@ define [ "jQuery", "Underscore", "Mustache", "views/baseEditView", "events", "co
     getFields: ->
       # Returns a hash of the current fields
       # (for validation or saving purposes)
-      return name: $("#ruleNameInput").val()
+      name: $("#ruleNameInput").val()
+      fromServerGroupId: $( '#fromGroupSelect' ).val()
+      toServerGroupId: $( '#toGroupSelect' ).val()
+      sendToAll: $( '#sendToAll' ).hasClass( 'active' )
+      storeIfOffline: $( '#storeIfOffline' ).hasClass( 'active' )
 
     cancel: ->
       if not @model.isNew()

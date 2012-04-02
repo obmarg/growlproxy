@@ -32,9 +32,16 @@ define [ "jQuery", "Underscore", "Backbone" ], ($, _, Backbone) ->
       @filters.add( member )
 
     validate: (attrs) ->
+      rv = []
       if attrs[ 'name' ]?.length < 1
-      	return [ [ 'name', 'Name must not be empty' ] ]
+      	rv.push( [ 'name', 'Name must not be empty' ] )
+      if attrs[ 'fromServerGroupId' ]?.length < 1
+        rv.push( [ 'fromServerGroup', 'Please select a server group' ] )
+      if attrs[ 'toServerGroupId' ]?.length < 1
+        rv.push( [ 'toServerGroup', 'Please select a server group' ] )
       # TODO: Check that the servers actually exist
+      if rv.length > 0
+        return rv
       return
   )
   return Rule
